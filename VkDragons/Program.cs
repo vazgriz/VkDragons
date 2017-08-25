@@ -1,5 +1,7 @@
 ﻿using System;
 
+using CSGL.GLFW;
+
 namespace VkDragons {
     class Program {
         static void Main(string[] args) {
@@ -7,9 +9,20 @@ namespace VkDragons {
         }
 
         void Run() {
-            using (Scene scene = new Scene(800, 600)) {
+            GLFW.Init();
+            GLFW.WindowHint(WindowHint.ClientAPI, (int)ClientAPI.NoAPI);
+            GLFW.WindowHint(WindowHint.Visible, 0);
 
+            Window window = new Window(800, 600, "Here be Dragons");
+
+            using (Scene scene = new Scene(window.FramebufferWidth, window.FramebufferHeight)) {
+                window.Visible = true;
+                while (!window.ShouldClose) {
+                    GLFW.PollEvents();
+                }
             }
+
+            GLFW.Terminate();
         }
     }
 }
