@@ -15,7 +15,7 @@ namespace VkDragons {
 
             Window window = new Window(800, 600, "Here be Dragons");
 
-            using (Scene scene = new Scene(window.FramebufferWidth, window.FramebufferHeight)) {
+            using (Scene scene = new Scene(window)) {
                 window.Visible = true;
                 while (!window.ShouldClose) {
                     GLFW.PollEvents();
