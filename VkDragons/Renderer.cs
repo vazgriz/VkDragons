@@ -40,9 +40,10 @@ namespace VkDragons {
             }
         }
 
+        public bool Gamma { get; private set; }
+
         int width;
         int height;
-        bool gamma;
 
         struct QueueIndices {
             public int graphicsFamily;
@@ -297,7 +298,7 @@ namespace VkDragons {
 
         VkSurfaceFormatKHR ChooseSurfaceFormat(List<VkSurfaceFormatKHR> availableFormats) {
             if (availableFormats.Count == 1 && availableFormats[0].format == VkFormat.Undefined) {
-                gamma = true;
+                Gamma = true;
                 return new VkSurfaceFormatKHR {
                     format = VkFormat.R8g8b8a8Unorm,
                     colorSpace = VkColorSpaceKHR.SrgbNonlinearKhr
@@ -307,7 +308,7 @@ namespace VkDragons {
             foreach (var availableFormat in availableFormats) {
                 if ((availableFormat.format == VkFormat.R8g8b8a8Srgb || availableFormat.format == VkFormat.B8g8r8a8Srgb)
                     && availableFormat.colorSpace == VkColorSpaceKHR.SrgbNonlinearKhr) {
-                    gamma = true;
+                    Gamma = true;
                     return availableFormat;
                 }
             }
@@ -315,7 +316,7 @@ namespace VkDragons {
             foreach (var availableFormat in availableFormats) {
                 if ((availableFormat.format == VkFormat.R8g8b8a8Unorm || availableFormat.format == VkFormat.B8g8r8a8Unorm)
                     && availableFormat.colorSpace == VkColorSpaceKHR.SrgbNonlinearKhr) {
-                    gamma = false;
+                    Gamma = false;
                     return availableFormat;
                 }
             }
