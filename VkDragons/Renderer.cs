@@ -11,7 +11,6 @@ namespace VkDragons {
         Surface surface;
         PhysicalDevice physicalDevice;
         VkPhysicalDeviceFeatures features;
-        Device device;
         Queue graphicsQueue;
         Queue presentQueue;
         CommandPool commandPool;
@@ -19,6 +18,8 @@ namespace VkDragons {
         List<Fence> fences;
         Semaphore imageAvailableSemaphore;
         Semaphore renderFinishedSemaphore;
+
+        public Device Device { get; private set; }
 
         public IList<Image> SwapchainImages { get; private set; }
         public IList<ImageView> SwapchainImageViews { get; private set; }
@@ -82,14 +83,14 @@ namespace VkDragons {
         }
 
         public void Dispose() {
-            device.WaitIdle();
+            Device.WaitIdle();
             imageAvailableSemaphore.Dispose();
             renderFinishedSemaphore.Dispose();
             foreach (var f in fences) f.Dispose();
             foreach (var iv in SwapchainImageViews) iv.Dispose();
             swapchain.Dispose();
             commandPool.Dispose();
-            device.Dispose();
+            Device.Dispose();
             surface.Dispose();
             instance.Dispose();
         }
@@ -262,10 +263,10 @@ namespace VkDragons {
                 queueCreateInfos = infos
             };
 
-            device = new Device(physicalDevice, info);
+            Device = new Device(physicalDevice, info);
 
-            graphicsQueue = device.GetQueue((uint)indices.graphicsFamily, 0);
-            presentQueue = device.GetQueue((uint)indices.presentFamily, 0);
+            graphicsQueue = Device.GetQueue((uint)indices.graphicsFamily, 0);
+            presentQueue = Device.GetQueue((uint)indices.presentFamily, 0);
         }
 
         void SelectFeatures() {
@@ -287,7 +288,7 @@ namespace VkDragons {
                 queueFamilyIndex = (uint)indices.graphicsFamily
             };
 
-            commandPool = new CommandPool(device, info);
+            commandPool = new CommandPool(Device, info);
         }
 
         void RecreateSwapchain() {
@@ -397,7 +398,7 @@ namespace VkDragons {
             info.presentMode = mode;
             info.clipped = true;
 
-            swapchain = new Swapchain(device, info);
+            swapchain = new Swapchain(Device, info);
 
             SwapchainImages = swapchain.Images;
             SwapchainFormat = swapchain.Format;
@@ -427,7 +428,7 @@ namespace VkDragons {
                     }
                 };
 
-                SwapchainImageViews.Add(new ImageView(device, info));
+                SwapchainImageViews.Add(new ImageView(Device, info));
             }
         }
 
@@ -439,13 +440,13 @@ namespace VkDragons {
                     Flags = VkFenceCreateFlags.SignaledBit
                 };
 
-                fences.Add(new Fence(device, info));
+                fences.Add(new Fence(Device, info));
             }
         }
 
         void CreateSemaphores() {
-            imageAvailableSemaphore = new Semaphore(device);
-            renderFinishedSemaphore = new Semaphore(device);
+            imageAvailableSemaphore = new Semaphore(Device);
+            renderFinishedSemaphore = new Semaphore(Device);
         }
     }
 }
