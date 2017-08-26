@@ -34,6 +34,12 @@ namespace VkDragons {
             }
         }
 
+        public CommandPool CommandPool {
+            get {
+                return commandPool;
+            }
+        }
+
         int width;
         int height;
         bool gamma;
