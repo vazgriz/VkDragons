@@ -27,6 +27,13 @@ namespace VkDragons {
 
         public bool VSync { get; set; } = true;
 
+        uint imageIndex;
+        public uint ImageIndex {
+            get {
+                return imageIndex;
+            }
+        }
+
         int width;
         int height;
         bool gamma;
@@ -78,6 +85,35 @@ namespace VkDragons {
             device.Dispose();
             surface.Dispose();
             instance.Dispose();
+        }
+
+        public void Acquire() {
+            swapchain.AcquireNextImage(ulong.MaxValue, imageAvailableSemaphore, out imageIndex);
+
+            var fence = fences[(int)ImageIndex];
+            fence.Wait();
+            fence.Reset();
+        }
+
+        public void Submit(CommandBuffer commandBuffer) {
+            SubmitInfo info = new SubmitInfo {
+                waitSemaphores = new List<Semaphore> { imageAvailableSemaphore },
+                waitDstStageMask = new List<VkPipelineStageFlags> { VkPipelineStageFlags.ColorAttachmentOutputBit },
+                commandBuffers = new List<CommandBuffer> { commandBuffer },
+                signalSemaphores = new List<Semaphore> { renderFinishedSemaphore }
+            };
+
+            graphicsQueue.Submit(new List<SubmitInfo> { info }, fences[(int)ImageIndex]);
+        }
+
+        public void Present() {
+            PresentInfo info = new PresentInfo {
+                waitSemaphores = new List<Semaphore> { renderFinishedSemaphore },
+                swapchains = new List<Swapchain> { swapchain },
+                imageIndices = new List<uint> { ImageIndex }
+            };
+
+            presentQueue.Present(info);
         }
 
         void CreateInstance() {
