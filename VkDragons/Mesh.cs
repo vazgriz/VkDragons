@@ -5,20 +5,20 @@ using System.Numerics;
 
 namespace VkDragons {
     public class Mesh {
-        List<Vector3> positions;
-        List<Vector3> normals;
-        List<Vector3> tangents;
-        List<Vector3> binormals;
-        List<Vector2> texCoords;
-        List<uint> indices;
+        public List<Vector3> Positions { get; private set; }
+        public List<Vector3> Normals { get; private set; }
+        public List<Vector3> Tangents { get; private set; }
+        public List<Vector3> Binormals { get; private set; }
+        public List<Vector2> TexCoords { get; private set; }
+        public List<uint> Indices { get; private set; }
 
         public Mesh(string fileName) {
-            positions = new List<Vector3>();
-            normals = new List<Vector3>();
-            tangents = new List<Vector3>();
-            binormals = new List<Vector3>();
-            texCoords = new List<Vector2>();
-            indices = new List<uint>();
+            Positions = new List<Vector3>();
+            Normals = new List<Vector3>();
+            Tangents = new List<Vector3>();
+            Binormals = new List<Vector3>();
+            TexCoords = new List<Vector2>();
+            Indices = new List<uint>();
 
             Load(fileName);
             CenterAndUnitMesh();
@@ -55,7 +55,7 @@ namespace VkDragons {
                         if (tokens.Count < 3) continue;
 
                         Vector2 uv = new Vector2(float.Parse(tokens[1]), float.Parse(tokens[2]));
-                        texCoords.Add(uv);
+                        TexCoords.Add(uv);
                     } else if (tokens[0] == "f") {
                         if (tokens.Count < 4) continue;
 
@@ -80,7 +80,7 @@ namespace VkDragons {
                 string str = faces[i];
 
                 if (indicesUsed.ContainsKey(str)) {
-                    indices.Add(indicesUsed[str]);
+                    Indices.Add(indicesUsed[str]);
                     continue;
                 }
 
@@ -88,19 +88,19 @@ namespace VkDragons {
                 if (subtokens.Count == 0) continue;
 
                 uint index1 = uint.Parse(subtokens[0]);
-                positions.Add(positionsTemp[(int)index1]);
+                Positions.Add(positionsTemp[(int)index1]);
 
                 if (hasUV) {
                     uint index2 = uint.Parse(subtokens[1]);
-                    texCoords.Add(texCoordsTemp[(int)index2]);
+                    TexCoords.Add(texCoordsTemp[(int)index2]);
                 }
 
                 if (hasNormals) {
                     uint index3 = uint.Parse(subtokens[2]);
-                    normals.Add(normalsTemp[(int)index3]);
+                    Normals.Add(normalsTemp[(int)index3]);
                 }
 
-                indices.Add(maxIndex);
+                Indices.Add(maxIndex);
                 indicesUsed[str] = maxIndex;
                 maxIndex++;
             }
@@ -108,44 +108,44 @@ namespace VkDragons {
 
         void CenterAndUnitMesh() {
             Vector3 centroid = new Vector3();
-            float maxi = positions[0].X;
+            float maxi = Positions[0].X;
 
-            foreach (var pos in positions) {
+            foreach (var pos in Positions) {
                 centroid += pos;
             }
 
-            centroid /= positions.Count;
+            centroid /= Positions.Count;
 
-            for (int i = 0; i < positions.Count; i++) {
-                positions[i] -= centroid;
-                maxi = Math.Abs(positions[i].X) > maxi ? Math.Abs(positions[i].X) : maxi;
-                maxi = Math.Abs(positions[i].Y) > maxi ? Math.Abs(positions[i].Y) : maxi;
-                maxi = Math.Abs(positions[i].Z) > maxi ? Math.Abs(positions[i].Z) : maxi;
+            for (int i = 0; i < Positions.Count; i++) {
+                Positions[i] -= centroid;
+                maxi = Math.Abs(Positions[i].X) > maxi ? Math.Abs(Positions[i].X) : maxi;
+                maxi = Math.Abs(Positions[i].Y) > maxi ? Math.Abs(Positions[i].Y) : maxi;
+                maxi = Math.Abs(Positions[i].Z) > maxi ? Math.Abs(Positions[i].Z) : maxi;
             }
 
             maxi = maxi == 0 ? 1f : maxi;
 
-            for (int i = 0; i < positions.Count; i++) {
-                positions[i] /= maxi;
+            for (int i = 0; i < Positions.Count; i++) {
+                Positions[i] /= maxi;
             }
         }
 
         void ComputeTangentsAndBinormals() {
-            if (indices.Count * positions.Count * texCoords.Count == 0) return;
+            if (Indices.Count * Positions.Count * TexCoords.Count == 0) return;
 
-            for (int i = 0; i < positions.Count; i++) {
-                tangents.Add(new Vector3());
-                binormals.Add(new Vector3());
+            for (int i = 0; i < Positions.Count; i++) {
+                Tangents.Add(new Vector3());
+                Binormals.Add(new Vector3());
             }
 
-            for (int i = 0; i < indices.Count; i += 3) {
-                var v0 = positions[(int)indices[i]];
-                var v1 = positions[(int)indices[i + 1]];
-                var v2 = positions[(int)indices[i + 2]];
+            for (int i = 0; i < Indices.Count; i += 3) {
+                var v0 = Positions[(int)Indices[i]];
+                var v1 = Positions[(int)Indices[i + 1]];
+                var v2 = Positions[(int)Indices[i + 2]];
 
-                var uv0 = texCoords[(int)indices[i]];
-                var uv1 = texCoords[(int)indices[i + 1]];
-                var uv2 = texCoords[(int)indices[i + 2]];
+                var uv0 = TexCoords[(int)Indices[i]];
+                var uv1 = TexCoords[(int)Indices[i + 1]];
+                var uv2 = TexCoords[(int)Indices[i + 2]];
 
                 var deltaPos1 = v1 - v0;
                 var deltaPos2 = v2 - v0;
@@ -156,20 +156,20 @@ namespace VkDragons {
                 var tangent = det * (deltaPos1 * deltaUV2.Y - deltaPos2 * deltaUV1.Y);
                 var binormal = det * (deltaPos2 * deltaUV1.X - deltaPos1 * deltaUV2.X);
 
-                tangents[(int)indices[i]] += tangent;
-                tangents[(int)indices[i + 1]] += tangent;
-                tangents[(int)indices[i + 2]] += tangent;
+                Tangents[(int)Indices[i]] += tangent;
+                Tangents[(int)Indices[i + 1]] += tangent;
+                Tangents[(int)Indices[i + 2]] += tangent;
 
-                binormals[(int)indices[i]] += binormal;
-                binormals[(int)indices[i + 1]] += binormal;
-                binormals[(int)indices[i + 2]] += binormal;
+                Binormals[(int)Indices[i]] += binormal;
+                Binormals[(int)Indices[i + 1]] += binormal;
+                Binormals[(int)Indices[i + 2]] += binormal;
             }
 
-            for (int i = 0; i < tangents.Count; i++) {
-                tangents[i] = Vector3.Normalize(tangents[i] - normals[i] * Vector3.Dot(normals[i], tangents[i]));
+            for (int i = 0; i < Tangents.Count; i++) {
+                Tangents[i] = Vector3.Normalize(Tangents[i] - Normals[i] * Vector3.Dot(Normals[i], Tangents[i]));
 
-                if (Vector3.Dot(Vector3.Cross(normals[i], tangents[i]), binormals[i]) < 0f) {
-                    tangents[i] *= -1f;
+                if (Vector3.Dot(Vector3.Cross(Normals[i], Tangents[i]), Binormals[i]) < 0f) {
+                    Tangents[i] *= -1f;
                 }
             }
         }
