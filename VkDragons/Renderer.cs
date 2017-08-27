@@ -45,8 +45,8 @@ namespace VkDragons {
 
         public bool Gamma { get; private set; }
 
-        int width;
-        int height;
+        public int Width { get; private set; }
+        public int Height { get; private set; }
 
         struct QueueIndices {
             public int graphicsFamily;
@@ -70,8 +70,8 @@ namespace VkDragons {
 
         public Renderer(Window window) {
             this.window = window;
-            width = window.FramebufferWidth;
-            height = window.FramebufferHeight;
+            Width = window.FramebufferWidth;
+            Height = window.FramebufferHeight;
 
             CreateInstance();
             CreateSurface();
@@ -350,8 +350,8 @@ namespace VkDragons {
             if (capabilities.currentExtent.width != uint.MaxValue) {
                 return capabilities.currentExtent;
             } else {
-                uint width = (uint)this.width;
-                uint height = (uint)this.height;
+                uint width = (uint)Width;
+                uint height = (uint)Height;
 
                 width = Math.Max(capabilities.minImageExtent.width, Math.Min(capabilities.maxImageExtent.width, width));
                 height = Math.Max(capabilities.minImageExtent.height, Math.Min(capabilities.maxImageExtent.height, height));
