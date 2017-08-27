@@ -89,13 +89,17 @@ namespace VkDragons {
             Memory.Dispose();
             imageAvailableSemaphore.Dispose();
             renderFinishedSemaphore.Dispose();
-            foreach (var f in fences) f.Dispose();
-            foreach (var iv in SwapchainImageViews) iv.Dispose();
-            swapchain.Dispose();
+            CleanupSwapchain();
             commandPool.Dispose();
             Device.Dispose();
             surface.Dispose();
             instance.Dispose();
+        }
+
+        void CleanupSwapchain() {
+            foreach (var f in fences) f.Dispose();
+            foreach (var iv in SwapchainImageViews) iv.Dispose();
+            swapchain.Dispose();
         }
 
         public void Acquire() {
