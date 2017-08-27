@@ -15,5 +15,9 @@ namespace VkDragons {
         public void Dispose() {
             renderer.Dispose();
         }
+
+        public void Resize(int width, int height) {
+            renderer.Resize(width, height);
+        }
     }
 }
