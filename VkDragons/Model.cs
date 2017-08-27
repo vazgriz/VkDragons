@@ -11,6 +11,7 @@ namespace VkDragons {
         Renderer renderer;
 
         Mesh mesh;
+        public Transform Transform { get; private set; }
         public uint IndexCount { get; private set; }
 
         Buffer positionsBuffer;
@@ -31,6 +32,7 @@ namespace VkDragons {
             this.renderer = renderer;
 
             mesh = new Mesh(fileName);
+            Transform = new Transform();
             IndexCount = (uint)mesh.Indices.Count;
             CreateBuffers();
         }
