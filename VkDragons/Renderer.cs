@@ -131,6 +131,15 @@ namespace VkDragons {
             presentQueue.Present(info);
         }
 
+        public void Resize(int width, int height) {
+            Width = width;
+            Height = height;
+
+            Device.WaitIdle();
+            CleanupSwapchain();
+            RecreateSwapchain();
+        }
+
         void CreateInstance() {
             var extensions = new List<string>(GLFW.GetRequiredInstanceExceptions());
             InstanceCreateInfo info = new InstanceCreateInfo {
