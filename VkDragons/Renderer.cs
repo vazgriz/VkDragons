@@ -78,9 +78,7 @@ namespace VkDragons {
             PickPhysicalDevice();
             CreateDevice();
             CreateCommandPool();
-            CreateSwapchain();
-            CreateImageViews();
-            CreateFences();
+            RecreateSwapchain();
             CreateSemaphores();
 
             Memory = new Memory(Device);
