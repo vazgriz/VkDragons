@@ -146,7 +146,7 @@ namespace VkDragons {
                 extensions = extensions,
                 applicationInfo = new ApplicationInfo {
                     apiVersion = new VkVersion(1, 0, 0),
-                    applicationName = "Here Be dragons",
+                    applicationName = "Here Be Dragons",
                     applicationVersion = new VkVersion(1, 0, 0),
                     engineVersion = new VkVersion(1, 0, 0)
                 }
