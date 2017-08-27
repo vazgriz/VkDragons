@@ -61,6 +61,11 @@ namespace VkDragons {
 
             Buffer buffer = new Buffer(renderer.Device, info);
 
+            var allocator = renderer.Memory.GetDeviceAllocator(buffer.Requirements);
+            var alloc = allocator.Alloc(buffer.Requirements.size, buffer.Requirements.alignment);
+
+            buffer.Bind(alloc.memory, alloc.offset);
+
             return buffer;
         }
 
