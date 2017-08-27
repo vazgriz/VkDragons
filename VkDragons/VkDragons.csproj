@@ -66,6 +66,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Allocator.cs" />
+    <Compile Include="Memory.cs" />
     <Compile Include="Mesh.cs" />
     <Compile Include="Model.cs" />
     <Compile Include="Program.cs" />
