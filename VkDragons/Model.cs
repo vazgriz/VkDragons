@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Numerics;
+using System.Collections.Generic;
 
 using CSGL;
 using CSGL.Vulkan;
@@ -69,6 +70,38 @@ namespace VkDragons {
             return buffer;
         }
 
+        Buffer CreateHostBuffer(ulong size, VkBufferUsageFlags usage) {
+            BufferCreateInfo info = new BufferCreateInfo();
+            info.size = size;
+            info.usage = usage;
+            info.sharingMode = VkSharingMode.Exclusive;
+
+            Buffer buffer = new Buffer(renderer.Device, info);
+
+            var allocator = renderer.Memory.HostAllocator;
+            var alloc = allocator.Alloc(buffer.Requirements.size, buffer.Requirements.alignment);
+
+            buffer.Bind(alloc.memory, alloc.offset);
+
+            return buffer;
+        }
+
+        Buffer Copy<T>(CommandBuffer commandBuffer, Buffer dest, List<T> source) where T : struct {
+            ulong size = (ulong)source.Count * (ulong)Interop.SizeOf<T>();
+            Buffer buffer = CreateHostBuffer(size, VkBufferUsageFlags.TransferSrcBit);
+            IntPtr mapping = (IntPtr)((ulong)renderer.Memory.GetMapping(buffer.Memory) + buffer.Offset);
+            Interop.Copy(source, mapping);
+
+            VkBufferCopy copy = new VkBufferCopy();
+            copy.size = size;
+            copy.dstOffset = 0;
+            copy.srcOffset = 0;
+
+            commandBuffer.CopyBuffer(buffer, dest, copy);
+
+            return buffer;
+        }
+
         void CreateBuffers() {
             positionsBuffer = CreateBuffer((ulong)mesh.Positions.Count * (ulong)Interop.SizeOf<Vector3>(),
                 VkBufferUsageFlags.VertexBufferBit | VkBufferUsageFlags.TransferDstBit);
@@ -82,6 +115,15 @@ namespace VkDragons {
                 VkBufferUsageFlags.VertexBufferBit | VkBufferUsageFlags.TransferDstBit);
             indexBuffer = CreateBuffer(IndexCount * (ulong)Interop.SizeOf<uint>(),
                 VkBufferUsageFlags.IndexBufferBit | VkBufferUsageFlags.TransferDstBit);
+        }
+
+        public void UploadData(CommandBuffer commandBuffer) {
+            positionsStagingBuffer = Copy(commandBuffer, positionsBuffer, mesh.Positions);
+            normalsStagingBuffer = Copy(commandBuffer, normalsBuffer, mesh.Normals);
+            tangentsStagingBuffer = Copy(commandBuffer, tangentsBuffer, mesh.Tangents);
+            binormalsStagingBuffer = Copy(commandBuffer, binormalsBuffer, mesh.Binormals);
+            texCoordsStagingBuffer = Copy(commandBuffer, texCoordsBuffer, mesh.TexCoords);
+            indexStagingBuffer = Copy(commandBuffer, indexBuffer, mesh.Indices);
         }
     }
 }
