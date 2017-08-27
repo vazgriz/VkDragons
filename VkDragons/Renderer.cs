@@ -26,6 +26,8 @@ namespace VkDragons {
         public VkFormat SwapchainFormat { get; private set; }
         public VkExtent2D SwapchainExtent { get; private set; }
 
+        public Memory Memory { get; private set; }
+
         public bool VSync { get; set; } = true;
 
         uint imageIndex;
@@ -80,10 +82,13 @@ namespace VkDragons {
             CreateImageViews();
             CreateFences();
             CreateSemaphores();
+
+            Memory = new Memory(Device);
         }
 
         public void Dispose() {
             Device.WaitIdle();
+            Memory.Dispose();
             imageAvailableSemaphore.Dispose();
             renderFinishedSemaphore.Dispose();
             foreach (var f in fences) f.Dispose();
