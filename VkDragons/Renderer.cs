@@ -103,7 +103,7 @@ namespace VkDragons {
         }
 
         public void Acquire() {
-            swapchain.AcquireNextImage(ulong.MaxValue, imageAvailableSemaphore, out imageIndex);
+            swapchain.AcquireNextImage(ulong.MaxValue, imageAvailableSemaphore, null, out imageIndex);
 
             var fence = fences[(int)ImageIndex];
             fence.Wait();
