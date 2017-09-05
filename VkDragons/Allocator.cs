@@ -33,8 +33,8 @@ namespace VkDragons {
 
         public Allocator(Device device, uint type, ulong pageSize, Dictionary<DeviceMemory, Allocator> allocatorMap) {
             this.device = device;
-            this.Type = type;
             this.pageSize = pageSize;
+            Type = type;
 
             pages = new List<Page>();
             pageMap = new Dictionary<DeviceMemory, int>();
