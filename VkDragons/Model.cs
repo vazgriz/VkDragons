@@ -56,6 +56,51 @@ namespace VkDragons {
             mesh = null;
         }
 
+        public void Draw(CommandBuffer commandBuffer, PipelineLayout pipelineLayout, Camera camera) {
+            List<Buffer> buffers = new List<Buffer> {
+                positionsBuffer,
+                normalsBuffer,
+                tangentsBuffer,
+                binormalsBuffer,
+                texCoordsBuffer
+            };
+            List<ulong> offsets = new List<ulong> {
+                0, 0, 0, 0, 0
+            };
+
+            commandBuffer.BindVertexBuffers(0, buffers, offsets);
+            commandBuffer.BindIndexBuffer(indexBuffer, 0, VkIndexType.Uint32);
+
+            commandBuffer.PushConstants(pipelineLayout, VkShaderStageFlags.VertexBit, 0, Transform.WorldMatrix);
+
+            Matrix4x4 MV = camera.View * Transform.WorldMatrix;
+            Matrix4x4 inverse;
+            Matrix4x4.Invert(MV, out inverse);
+            Matrix4x4 normal = Matrix4x4.Transpose(inverse);
+            
+            commandBuffer.PushConstants(pipelineLayout, VkShaderStageFlags.FragmentBit,
+                (uint)Interop.SizeOf<Matrix4x4>(), 3 * (uint)Interop.SizeOf<Vector4>(),
+                Interop.AddressOf(ref inverse));
+
+            commandBuffer.DrawIndexed(IndexCount, 1, 0, 0, 0);
+        }
+
+        public void DrawDepth(CommandBuffer commandBuffer, PipelineLayout pipelineLayout, Camera camera) {
+            List<Buffer> buffers = new List<Buffer> {
+                positionsBuffer,
+            };
+            List<ulong> offsets = new List<ulong> {
+                0
+            };
+
+            commandBuffer.BindVertexBuffers(0, buffers, offsets);
+            commandBuffer.BindIndexBuffer(indexBuffer, 0, VkIndexType.Uint32);
+
+            commandBuffer.PushConstants(pipelineLayout, VkShaderStageFlags.VertexBit, 0, Transform.WorldMatrix);
+
+            commandBuffer.DrawIndexed(IndexCount, 1, 0, 0, 0);
+        }
+
         Buffer CreateBuffer(ulong size, VkBufferUsageFlags usage) {
             BufferCreateInfo info = new BufferCreateInfo();
             info.size = size;
