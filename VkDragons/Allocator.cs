@@ -60,19 +60,19 @@ namespace VkDragons {
             stack.Clear();
         }
 
-        public Allocation Alloc(ulong size, ulong alignment) {
-            if (size > pageSize) throw new Exception("Allocation too large");
+        public Allocation Alloc(VkMemoryRequirements requirements) {
+            if (requirements.size > pageSize) throw new Exception("Allocation too large");
 
             Allocation alloc;
             for (int i = 0; i < pages.Count; i++) {
-                alloc = AttemptAlloc(i, size, alignment);
+                alloc = AttemptAlloc(i, requirements.size, requirements.alignment);
                 if (alloc.memory != null) {
                     return alloc;
                 }
             }
 
             AllocPage();
-            alloc = AttemptAlloc(pages.Count - 1, size, alignment);
+            alloc = AttemptAlloc(pages.Count - 1, requirements.size, requirements.alignment);
             if (alloc.memory != null) {
                 return alloc;
             }
