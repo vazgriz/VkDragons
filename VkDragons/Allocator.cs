@@ -11,14 +11,14 @@ namespace VkDragons {
     }
 
     public class Allocator : IDisposable {
-        struct InternalAllocation {
-            public int page;
-            public ulong pointer;
+        struct Node {
+            public ulong offset;
+            public ulong size;
         }
 
         struct Page {
             public DeviceMemory memory;
-            public ulong pointer;
+            public LinkedList<Node> nodes;
             public IntPtr mapping;
         }
 
@@ -27,15 +27,19 @@ namespace VkDragons {
         public uint Type { get; private set; }
         ulong pageSize;
         List<Page> pages;
-        Stack<InternalAllocation> stack;
+        Dictionary<DeviceMemory, int> pageMap;
 
-        public Allocator(Device device, uint type, ulong pageSize) {
+        Dictionary<DeviceMemory, Allocator> allocatorMap;
+
+        public Allocator(Device device, uint type, ulong pageSize, Dictionary<DeviceMemory, Allocator> allocatorMap) {
             this.device = device;
             this.Type = type;
             this.pageSize = pageSize;
 
             pages = new List<Page>();
-            stack = new Stack<InternalAllocation>();
+            pageMap = new Dictionary<DeviceMemory, int>();
+
+            this.allocatorMap = allocatorMap;
         }
 
         public void Dispose() {
@@ -44,20 +48,12 @@ namespace VkDragons {
             }
         }
 
-        public void Pop() {
-            var alloc = stack.Pop();
-            var page = pages[alloc.page];
-            page.pointer = alloc.pointer;
-            pages[alloc.page] = page;
-        }
-
         public void Reset() {
             for (int i = 0; i < pages.Count; i++) {
                 var page = pages[i];
-                page.pointer = 0;
-                pages[i] = page;
+                pages[i].nodes.Clear();
+                pages[i].nodes.AddFirst(new Node { offset = 0, size = pageSize });
             }
-            stack.Clear();
         }
 
         public Allocation Alloc(VkMemoryRequirements requirements) {
@@ -65,19 +61,32 @@ namespace VkDragons {
 
             Allocation alloc;
             for (int i = 0; i < pages.Count; i++) {
-                alloc = AttemptAlloc(i, requirements.size, requirements.alignment);
+                alloc = AttemptAlloc(pages[i], requirements);
                 if (alloc.memory != null) {
                     return alloc;
                 }
             }
 
             AllocPage();
-            alloc = AttemptAlloc(pages.Count - 1, requirements.size, requirements.alignment);
+            alloc = AttemptAlloc(pages[pages.Count - 1], requirements);
             if (alloc.memory != null) {
                 return alloc;
             }
 
             throw new Exception("Could not allocate memory");
+        }
+
+        public void Free(Allocation alloc) {
+            Page page = GetPage(alloc.memory);
+
+            var node = page.nodes.First;
+            while (node != null) {
+                if (node.Value.offset > alloc.offset) {
+                    page.nodes.AddBefore(node, new Node { offset = alloc.offset, size = alloc.size });
+                    CombineNodes(page.nodes, node);
+                }
+                node = node.Next;
+            }
         }
 
         void AllocPage() {
@@ -88,33 +97,86 @@ namespace VkDragons {
 
             DeviceMemory memory = new DeviceMemory(device, info);
 
-            pages.Add(new Page { memory = memory });
+            pages.Add(new Page { memory = memory, nodes = new LinkedList<Node>() });
+            pages[pages.Count - 1].nodes.AddFirst(new Node { offset = 0, size = pageSize });
+            pageMap.Add(memory, pages.Count - 1);
+            allocatorMap.Add(memory, this);
         }
 
-        Allocation AttemptAlloc(int index, ulong size, ulong alignment) {
-            Page page = pages[index];
+        Allocation AttemptAlloc(Page page, VkMemoryRequirements requirements) {
+            var node = page.nodes.First;
 
-            ulong unalign = page.pointer % alignment;
+            while (node != null) {
+                if (node.Value.size >= requirements.size) {
+                    Allocation result = AttemptAlloc(page, node, requirements);
+                    if (result.memory != null) {
+                        SplitNode(page.nodes, node, result);
+                        return result;
+                    }
+                }
+                node = node.Next;
+            }
+
+            return new Allocation();
+        }
+
+        Allocation AttemptAlloc(Page page, LinkedListNode<Node> node, VkMemoryRequirements requirements) {
+            ulong unalign = node.Value.offset % requirements.alignment;
             ulong align = 0;
 
             if (unalign != 0) {
-                align = alignment - unalign;
+                align = requirements.alignment - unalign;
             }
 
-            if (page.pointer + align + size > pageSize) return new Allocation();
-
-            stack.Push(new InternalAllocation { page = index, pointer = page.pointer });
+            if (node.Value.offset + align + requirements.size > pageSize) return new Allocation();
 
             Allocation result = new Allocation {
                 memory = page.memory,
-                offset = page.pointer + align,
-                size = size
+                offset = node.Value.offset + align,
+                size = requirements.size
             };
-
-            page.pointer += align + size;
-            pages[index] = page;
-
+            
             return result;
+        }
+
+        void SplitNode(LinkedList<Node> list, LinkedListNode<Node> node, Allocation alloc) {
+            ulong frontSlack = alloc.offset - node.Value.offset;
+            ulong endSlack = (node.Value.offset + node.Value.size) - (alloc.offset + alloc.size);
+
+            if (frontSlack == 0 && endSlack == 0) {
+                list.Remove(node);
+            } else if (frontSlack == 0 && endSlack > 0) {
+                var value = node.Value;
+                value.offset = alloc.offset + alloc.size;
+                value.size = endSlack;
+                node.Value = value;
+            } else if (frontSlack > 0 && endSlack == 0) {
+                var value = node.Value;
+                value.size = frontSlack;
+                node.Value = value;
+            } else {
+                list.AddBefore(node, new Node { offset = node.Value.offset, size = frontSlack });
+                var value = node.Value;
+                value.offset = alloc.offset + alloc.size;
+                value.size = endSlack;
+                node.Value = value;
+            }
+        }
+
+        void CombineNodes(LinkedList<Node> list, LinkedListNode<Node> node) {
+            var middle = node.Previous;
+            CombineNode(list, node);
+            CombineNode(list, middle);
+        }
+
+        void CombineNode(LinkedList<Node> list, LinkedListNode<Node> node) {
+            var prev = node.Previous;
+            if (prev != null && prev.Value.offset + prev.Value.size == node.Value.offset) {
+                var value = prev.Value;
+                value.size += node.Value.size;
+                prev.Value = value;
+                list.Remove(node);
+            }
         }
 
         public IntPtr GetMapping(DeviceMemory memory) {
@@ -131,6 +193,14 @@ namespace VkDragons {
             }
 
             throw new Exception("Could not get mapping");
+        }
+
+        Page GetPage(DeviceMemory memory) {
+            if (pageMap.ContainsKey(memory)) {
+                return pages[pageMap[memory]];
+            }
+
+            throw new Exception("Could not find page");
         }
     }
 }

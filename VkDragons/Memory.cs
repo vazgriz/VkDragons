@@ -9,6 +9,7 @@ namespace VkDragons {
         VkPhysicalDeviceMemoryProperties memoryProperties;
 
         List<Allocator> deviceAllocators;
+        Dictionary<DeviceMemory, Allocator> allocatorMap;
 
         public Allocator HostAllocator { get; private set; }
 
@@ -18,6 +19,7 @@ namespace VkDragons {
             this.device = device;
             memoryProperties = device.PhysicalDevice.MemoryProperties;
             deviceAllocators = new List<Allocator>();
+            allocatorMap = new Dictionary<DeviceMemory, Allocator>();
 
             AllocHostMemory();
         }
@@ -55,11 +57,11 @@ namespace VkDragons {
 
             if (!found) throw new Exception("Could not find suitable host memory");
 
-            HostAllocator = new Allocator(device, type, allocationSize);
+            HostAllocator = new Allocator(device, type, allocationSize, allocatorMap);
         }
 
         Allocator AllocDevice(uint type) {
-            var allocator = new Allocator(device, type, allocationSize);
+            var allocator = new Allocator(device, type, allocationSize, allocatorMap);
             deviceAllocators.Add(allocator);
             return allocator;
         }
