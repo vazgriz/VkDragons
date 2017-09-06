@@ -14,23 +14,12 @@ namespace VkDragons {
         public Transform Transform { get; private set; }
         public uint IndexCount { get; private set; }
 
-        Buffer positionsBuffer;
-        Buffer normalsBuffer;
-        Buffer tangentsBuffer;
-        Buffer binormalsBuffer;
-        Buffer texCoordsBuffer;
-        Buffer indexBuffer;
-
-        Buffer positionsStagingBuffer;
-        Buffer normalsStagingBuffer;
-        Buffer tangentsStagingBuffer;
-        Buffer binormalsStagingBuffer;
-        Buffer texCoordsStagingBuffer;
-        Buffer indexStagingBuffer;
+        Buffer[] buffers;
 
         public Model(Renderer renderer, string fileName) {
             this.renderer = renderer;
 
+            buffers = new Buffer[6];
             mesh = new Mesh(fileName);
             Transform = new Transform();
             IndexCount = (uint)mesh.Indices.Count;
@@ -38,38 +27,25 @@ namespace VkDragons {
         }
 
         public void Dispose() {
-            positionsBuffer.Dispose();
-            normalsBuffer.Dispose();
-            tangentsBuffer.Dispose();
-            binormalsBuffer.Dispose();
-            texCoordsBuffer.Dispose();
-            indexBuffer.Dispose();
-        }
-
-        public void DestroyStaging() {
-            positionsStagingBuffer.Dispose();
-            normalsStagingBuffer.Dispose();
-            tangentsStagingBuffer.Dispose();
-            binormalsStagingBuffer.Dispose();
-            texCoordsStagingBuffer.Dispose();
-            indexStagingBuffer.Dispose();
-            mesh = null;
+            foreach (var buffer in buffers) {
+                buffer.Dispose();
+            }
         }
 
         public void Draw(CommandBuffer commandBuffer, PipelineLayout pipelineLayout, Camera camera) {
-            List<Buffer> buffers = new List<Buffer> {
-                positionsBuffer,
-                normalsBuffer,
-                tangentsBuffer,
-                binormalsBuffer,
-                texCoordsBuffer
+            List<Buffer> vertexBuffers = new List<Buffer> {
+                buffers[0],
+                buffers[1],
+                buffers[2],
+                buffers[3],
+                buffers[4],
             };
             List<ulong> offsets = new List<ulong> {
                 0, 0, 0, 0, 0
             };
 
-            commandBuffer.BindVertexBuffers(0, buffers, offsets);
-            commandBuffer.BindIndexBuffer(indexBuffer, 0, VkIndexType.Uint32);
+            commandBuffer.BindVertexBuffers(0, vertexBuffers, offsets);
+            commandBuffer.BindIndexBuffer(buffers[5], 0, VkIndexType.Uint32);
 
             commandBuffer.PushConstants(pipelineLayout, VkShaderStageFlags.VertexBit, 0, Transform.WorldMatrix);
 
@@ -86,15 +62,15 @@ namespace VkDragons {
         }
 
         public void DrawDepth(CommandBuffer commandBuffer, PipelineLayout pipelineLayout, Camera camera) {
-            List<Buffer> buffers = new List<Buffer> {
-                positionsBuffer,
+            List<Buffer> vertexBuffers = new List<Buffer> {
+                buffers[0],
             };
             List<ulong> offsets = new List<ulong> {
                 0
             };
 
-            commandBuffer.BindVertexBuffers(0, buffers, offsets);
-            commandBuffer.BindIndexBuffer(indexBuffer, 0, VkIndexType.Uint32);
+            commandBuffer.BindVertexBuffers(0, vertexBuffers, offsets);
+            commandBuffer.BindIndexBuffer(buffers[5], 0, VkIndexType.Uint32);
 
             commandBuffer.PushConstants(pipelineLayout, VkShaderStageFlags.VertexBit, 0, Transform.WorldMatrix);
 
@@ -133,44 +109,36 @@ namespace VkDragons {
             return buffer;
         }
 
-        Buffer Copy<T>(CommandBuffer commandBuffer, Buffer dest, List<T> source) where T : struct {
-            ulong size = (ulong)source.Count * (ulong)Interop.SizeOf<T>();
-            Buffer buffer = CreateHostBuffer(size, VkBufferUsageFlags.TransferSrcBit);
-            IntPtr mapping = (IntPtr)((ulong)renderer.Memory.GetMapping(buffer.Memory) + buffer.Offset);
-            Interop.Copy(source, mapping);
-
-            VkBufferCopy copy = new VkBufferCopy();
-            copy.size = size;
-            copy.dstOffset = 0;
-            copy.srcOffset = 0;
-
-            commandBuffer.CopyBuffer(buffer, dest, copy);
-
-            return buffer;
-        }
-
         void CreateBuffers() {
-            positionsBuffer = CreateBuffer((ulong)mesh.Positions.Count * (ulong)Interop.SizeOf<Vector3>(),
+            buffers[0] = CreateBuffer((ulong)mesh.Positions.Count * (ulong)Interop.SizeOf<Vector3>(),
                 VkBufferUsageFlags.VertexBufferBit | VkBufferUsageFlags.TransferDstBit);
-            normalsBuffer = CreateBuffer((ulong)mesh.Normals.Count * (ulong)Interop.SizeOf<Vector3>(),
+            buffers[1] = CreateBuffer((ulong)mesh.Normals.Count * (ulong)Interop.SizeOf<Vector3>(),
                 VkBufferUsageFlags.VertexBufferBit | VkBufferUsageFlags.TransferDstBit);
-            tangentsBuffer = CreateBuffer((ulong)mesh.Tangents.Count * (ulong)Interop.SizeOf<Vector3>(),
+            buffers[2] = CreateBuffer((ulong)mesh.Tangents.Count * (ulong)Interop.SizeOf<Vector3>(),
                 VkBufferUsageFlags.VertexBufferBit | VkBufferUsageFlags.TransferDstBit);
-            binormalsBuffer = CreateBuffer((ulong)mesh.Binormals.Count * (ulong)Interop.SizeOf<Vector3>(),
+            buffers[3] = CreateBuffer((ulong)mesh.Binormals.Count * (ulong)Interop.SizeOf<Vector3>(),
                 VkBufferUsageFlags.VertexBufferBit | VkBufferUsageFlags.TransferDstBit);
-            texCoordsBuffer = CreateBuffer((ulong)mesh.TexCoords.Count * (ulong)Interop.SizeOf<Vector2>(),
+            buffers[4] = CreateBuffer((ulong)mesh.TexCoords.Count * (ulong)Interop.SizeOf<Vector2>(),
                 VkBufferUsageFlags.VertexBufferBit | VkBufferUsageFlags.TransferDstBit);
-            indexBuffer = CreateBuffer(IndexCount * (ulong)Interop.SizeOf<uint>(),
+            buffers[5] = CreateBuffer(IndexCount * (ulong)Interop.SizeOf<uint>(),
                 VkBufferUsageFlags.IndexBufferBit | VkBufferUsageFlags.TransferDstBit);
         }
 
-        public void UploadData(CommandBuffer commandBuffer) {
-            positionsStagingBuffer = Copy(commandBuffer, positionsBuffer, mesh.Positions);
-            normalsStagingBuffer = Copy(commandBuffer, normalsBuffer, mesh.Normals);
-            tangentsStagingBuffer = Copy(commandBuffer, tangentsBuffer, mesh.Tangents);
-            binormalsStagingBuffer = Copy(commandBuffer, binormalsBuffer, mesh.Binormals);
-            texCoordsStagingBuffer = Copy(commandBuffer, texCoordsBuffer, mesh.TexCoords);
-            indexStagingBuffer = Copy(commandBuffer, indexBuffer, mesh.Indices);
+        public void UploadData(CommandBuffer commandBuffer, DisposableList<StagingBuffer> stagingBuffers) {
+            int start = stagingBuffers.Count;
+            stagingBuffers.Add(new StagingBuffer(renderer, (ulong)Interop.SizeOf(mesh.Positions)));
+            stagingBuffers.Add(new StagingBuffer(renderer, (ulong)Interop.SizeOf(mesh.Normals)));
+            stagingBuffers.Add(new StagingBuffer(renderer, (ulong)Interop.SizeOf(mesh.Tangents)));
+            stagingBuffers.Add(new StagingBuffer(renderer, (ulong)Interop.SizeOf(mesh.Binormals)));
+            stagingBuffers.Add(new StagingBuffer(renderer, (ulong)Interop.SizeOf(mesh.TexCoords)));
+            stagingBuffers.Add(new StagingBuffer(renderer, (ulong)Interop.SizeOf(mesh.Indices)));
+
+            stagingBuffers[start].Fill(mesh.Positions);
+            stagingBuffers[start + 1].Fill(mesh.Normals);
+            stagingBuffers[start + 2].Fill(mesh.Tangents);
+            stagingBuffers[start + 3].Fill(mesh.Binormals);
+            stagingBuffers[start + 4].Fill(mesh.TexCoords);
+            stagingBuffers[start + 5].Fill(mesh.Indices);
         }
 
         public static List<VkVertexInputBindingDescription> BindingDescriptions {
