@@ -93,22 +93,6 @@ namespace VkDragons {
             return buffer;
         }
 
-        Buffer CreateHostBuffer(ulong size, VkBufferUsageFlags usage) {
-            BufferCreateInfo info = new BufferCreateInfo();
-            info.size = size;
-            info.usage = usage;
-            info.sharingMode = VkSharingMode.Exclusive;
-
-            Buffer buffer = new Buffer(renderer.Device, info);
-
-            var allocator = renderer.Memory.HostAllocator;
-            var alloc = allocator.Alloc(buffer.Requirements);
-
-            buffer.Bind(alloc.memory, alloc.offset);
-
-            return buffer;
-        }
-
         void CreateBuffers() {
             buffers[0] = CreateBuffer((ulong)mesh.Positions.Count * (ulong)Interop.SizeOf<Vector3>(),
                 VkBufferUsageFlags.VertexBufferBit | VkBufferUsageFlags.TransferDstBit);
