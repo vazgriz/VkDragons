@@ -1,8 +1,26 @@
 ﻿using System;
+using System.Numerics;
 
 using CSGL.GLFW;
 
 namespace VkDragons {
+    struct CameraUniform {
+        public Matrix4x4 camProjection;
+        public Matrix4x4 camView;
+        public Matrix4x4 camRotationOnlyView;
+        public Matrix4x4 camViewInverse;
+    }
+
+    struct LightUniform {
+        public Matrix4x4 lightProjection;
+        public Matrix4x4 lightView;
+        public Vector4 lightPosition;
+        public Vector4 lightIa;
+        public Vector4 lightId;
+        public Vector4 lightIs;
+        public float lightShininess;
+    }
+
     public class Scene : IDisposable {
         Renderer renderer;
         Camera camera;
