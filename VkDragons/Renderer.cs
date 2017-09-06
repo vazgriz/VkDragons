@@ -9,7 +9,6 @@ namespace VkDragons {
         Window window;
         Instance instance;
         Surface surface;
-        PhysicalDevice physicalDevice;
         VkPhysicalDeviceFeatures features;
         Queue graphicsQueue;
         Queue presentQueue;
@@ -19,6 +18,7 @@ namespace VkDragons {
         Semaphore imageAvailableSemaphore;
         Semaphore renderFinishedSemaphore;
 
+        public PhysicalDevice PhysicalDevice { get; private set; }
         public Device Device { get; private set; }
 
         public IList<Image> SwapchainImages { get; private set; }
@@ -191,16 +191,16 @@ namespace VkDragons {
 
             foreach (var candidate in instance.PhysicalDevices) {
                 if (IsDeviceSuitable(candidate)) {
-                    physicalDevice = candidate;
+                    PhysicalDevice = candidate;
                     break;
                 }
             }
 
-            if (physicalDevice == null) {
+            if (PhysicalDevice == null) {
                 throw new Exception("Could not find suitable GPU");
             }
 
-            Console.WriteLine(physicalDevice.Name);
+            Console.WriteLine(PhysicalDevice.Name);
         }
 
         bool IsDeviceSuitable(PhysicalDevice physicalDevice) {
@@ -257,7 +257,7 @@ namespace VkDragons {
         }
 
         void CreateDevice() {
-            var indices = GetIndices(physicalDevice);
+            var indices = GetIndices(PhysicalDevice);
 
             List<DeviceQueueCreateInfo> infos = new List<DeviceQueueCreateInfo>();
             HashSet<int> uniqueFamilies = new HashSet<int> { indices.graphicsFamily, indices.presentFamily };
@@ -279,14 +279,14 @@ namespace VkDragons {
                 queueCreateInfos = infos
             };
 
-            Device = new Device(physicalDevice, info);
+            Device = new Device(PhysicalDevice, info);
 
             graphicsQueue = Device.GetQueue((uint)indices.graphicsFamily, 0);
             presentQueue = Device.GetQueue((uint)indices.presentFamily, 0);
         }
 
         void SelectFeatures() {
-            var available = physicalDevice.Features;
+            var available = PhysicalDevice.Features;
 
             if (available.shaderClipDistance == 1) {
                 features.shaderClipDistance = 1;
@@ -297,7 +297,7 @@ namespace VkDragons {
         }
 
         void CreateCommandPool() {
-            var indices = GetIndices(physicalDevice);
+            var indices = GetIndices(PhysicalDevice);
 
             CommandPoolCreateInfo info = new CommandPoolCreateInfo {
                 flags = VkCommandPoolCreateFlags.ResetCommandBufferBit,
@@ -372,9 +372,9 @@ namespace VkDragons {
         }
 
         void CreateSwapchain() {
-            var capabilities = surface.GetCapabilities(physicalDevice);
-            var formats = surface.GetFormats(physicalDevice);
-            var modes = surface.GetModes(physicalDevice);
+            var capabilities = surface.GetCapabilities(PhysicalDevice);
+            var formats = surface.GetFormats(PhysicalDevice);
+            var modes = surface.GetModes(PhysicalDevice);
 
             VkSurfaceFormatKHR format = ChooseSurfaceFormat(formats);
             VkPresentModeKHR mode = ChoosePresentMode(modes);
@@ -400,7 +400,7 @@ namespace VkDragons {
             info.imageArrayLayers = 1;
             info.imageUsage = VkImageUsageFlags.ColorAttachmentBit;
 
-            var indices = GetIndices(physicalDevice);
+            var indices = GetIndices(PhysicalDevice);
 
             if (indices.graphicsFamily != indices.presentFamily) {
                 info.imageSharingMode = VkSharingMode.Concurrent;
