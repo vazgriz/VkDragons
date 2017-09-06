@@ -104,6 +104,7 @@ namespace VkDragons {
         }
 
         public void Dispose() {
+            renderer.Device.WaitIdle();
             sampler.Dispose();
             uniformSetLayout.Dispose();
             textureSetLayout.Dispose();
