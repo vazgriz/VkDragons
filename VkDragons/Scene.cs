@@ -37,10 +37,17 @@ namespace VkDragons {
         UniformBuffer camUniform;
         UniformBuffer lightUniform;
 
+        public uint Width { get; private set; }
+        public uint Height { get; private set; }
+        public double Time { get; private set; }
+
         public Scene(Window window) {
             renderer = new Renderer(window);
             camera = new Camera(45, window.FramebufferWidth, window.FramebufferHeight);
             input = new Input(window, this, renderer, camera);
+
+            Width = (uint)window.FramebufferWidth;
+            Height = (uint)window.FramebufferHeight;
 
             CreateSampler();
             CreateUniformSetLayout();
