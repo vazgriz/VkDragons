@@ -49,6 +49,8 @@ namespace VkDragons {
             Width = (uint)window.FramebufferWidth;
             Height = (uint)window.FramebufferHeight;
 
+            camera.Position = new Vector3(0, 0, 1);
+
             CreateSampler();
             CreateUniformSetLayout();
             CreateTextureSetLayout();
