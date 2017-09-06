@@ -105,5 +105,10 @@ namespace VkDragons {
         public IntPtr GetMapping(DeviceMemory memory) {
             return HostAllocator.GetMapping(memory);
         }
+
+        public void Free(Allocation alloc) {
+            if (!allocatorMap.ContainsKey(alloc.memory)) throw new Exception("Could not deallocate");
+            allocatorMap[alloc.memory].Free(alloc);
+        }
     }
 }
