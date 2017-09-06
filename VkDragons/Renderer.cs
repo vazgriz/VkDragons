@@ -12,7 +12,6 @@ namespace VkDragons {
         VkPhysicalDeviceFeatures features;
         Queue graphicsQueue;
         Queue presentQueue;
-        CommandPool commandPool;
         Swapchain swapchain;
         List<Fence> fences;
         Semaphore imageAvailableSemaphore;
@@ -20,6 +19,7 @@ namespace VkDragons {
 
         public PhysicalDevice PhysicalDevice { get; private set; }
         public Device Device { get; private set; }
+        public CommandPool CommandPool { get; private set; }
 
         public IList<Image> SwapchainImages { get; private set; }
         public IList<ImageView> SwapchainImageViews { get; private set; }
@@ -39,7 +39,7 @@ namespace VkDragons {
 
         public CommandPool CommandPool {
             get {
-                return commandPool;
+                return CommandPool;
             }
         }
 
@@ -90,7 +90,7 @@ namespace VkDragons {
             imageAvailableSemaphore.Dispose();
             renderFinishedSemaphore.Dispose();
             CleanupSwapchain();
-            commandPool.Dispose();
+            CommandPool.Dispose();
             Device.Dispose();
             surface.Dispose();
             instance.Dispose();
@@ -141,7 +141,7 @@ namespace VkDragons {
         }
 
         public CommandBuffer GetSingleUseCommandBuffer() {
-            CommandBuffer commandBuffer = commandPool.Allocate(VkCommandBufferLevel.Primary);
+            CommandBuffer commandBuffer = CommandPool.Allocate(VkCommandBufferLevel.Primary);
 
             commandBuffer.Begin(new CommandBufferBeginInfo {
                 flags = VkCommandBufferUsageFlags.OneTimeSubmitBit
@@ -162,7 +162,7 @@ namespace VkDragons {
             graphicsQueue.Submit(new List<SubmitInfo> { info });
             graphicsQueue.WaitIdle();
 
-            commandPool.Free(new List<CommandBuffer> { commandBuffer });
+            CommandPool.Free(new List<CommandBuffer> { commandBuffer });
         }
 
         void CreateInstance() {
@@ -329,7 +329,7 @@ namespace VkDragons {
                 queueFamilyIndex = (uint)indices.graphicsFamily
             };
 
-            commandPool = new CommandPool(Device, info);
+            CommandPool = new CommandPool(Device, info);
         }
 
         void RecreateSwapchain() {
