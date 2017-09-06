@@ -6,23 +6,26 @@ using CSGL.Vulkan;
 using Buffer = CSGL.Vulkan.Buffer;
 
 namespace VkDragons {
-    public class StagingBuffer<T> : IDisposable where T : struct {
+    public class StagingBuffer : IDisposable {
         Renderer renderer;
         ulong size;
         Buffer buffer;
+        IntPtr mapping;
 
-        public StagingBuffer(Renderer renderer, ulong size, List<T> data) {
+        public StagingBuffer(Renderer renderer, ulong size) {
             this.renderer = renderer;
             this.size = size;
 
-            buffer = CreateHostBuffer((ulong)Interop.SizeOf(data), VkBufferUsageFlags.None);
-            IntPtr mapping = renderer.Memory.GetMapping(buffer.Memory);
-
-            Interop.Copy(data, mapping);
+            buffer = CreateHostBuffer(size, VkBufferUsageFlags.None);
+            mapping = renderer.Memory.GetMapping(buffer.Memory);
         }
 
         public void Dispose() {
             buffer.Dispose();
+        }
+
+        public void Fill<T>(List<T> data) where T : struct {
+            Interop.Copy(data, mapping);
         }
 
         Buffer CreateHostBuffer(ulong size, VkBufferUsageFlags usage) {
