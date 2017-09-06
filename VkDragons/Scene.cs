@@ -41,6 +41,10 @@ namespace VkDragons {
         Model suzanne;
         Model plane;
 
+        Material dragonMat;
+        Material suzanneMat;
+        Material planeMat;
+
         DisposableList<Texture> textures;
 
         public uint Width { get; private set; }
@@ -93,6 +97,10 @@ namespace VkDragons {
             var skyColor = new Texture(renderer, TextureType.Cubemap, "resources/cubemap/cubemap", true);
             var skySmallColor = new Texture(renderer, TextureType.Cubemap, "resources/cubemap/cubemap_diff", true);
 
+            dragonMat = new Material(renderer, sampler, new List<Texture> { dragonColor, dragonNormal, dragonEffects });
+            suzanneMat = new Material(renderer, sampler, new List<Texture> { suzanneColor, suzanneNormal, suzanneEffects });
+            planeMat = new Material(renderer, sampler, new List<Texture> { planeColor, planeNormal, planeEffects });
+
             textures = new DisposableList<Texture> {
                 dragonColor, dragonNormal, dragonEffects,
                 suzanneColor, suzanneNormal, suzanneEffects,
@@ -114,6 +122,9 @@ namespace VkDragons {
             dragon.Dispose();
             suzanne.Dispose();
             plane.Dispose();
+            dragonMat.Dispose();
+            suzanneMat.Dispose();
+            planeMat.Dispose();
             textures.Dispose();
             renderer.Dispose();
         }
