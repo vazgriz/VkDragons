@@ -78,6 +78,7 @@
     <Compile Include="StagingBuffer.cs" />
     <Compile Include="Texture.cs" />
     <Compile Include="Transform.cs" />
+    <Compile Include="UniformBuffer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
