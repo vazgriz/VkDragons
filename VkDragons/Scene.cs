@@ -37,6 +37,10 @@ namespace VkDragons {
         UniformBuffer camUniform;
         UniformBuffer lightUniform;
 
+        Model dragon;
+        Model suzanne;
+        Model plane;
+
         public uint Width { get; private set; }
         public uint Height { get; private set; }
         public double Time { get; private set; }
@@ -58,6 +62,19 @@ namespace VkDragons {
 
             camUniform = new UniformBuffer(renderer, (ulong)Interop.SizeOf<CameraUniform>(), uniformSetLayout);
             lightUniform = new UniformBuffer(renderer, (ulong)Interop.SizeOf<LightUniform>(), uniformSetLayout);
+
+            dragon = new Model(renderer, "resources/dragon.obj");
+            suzanne = new Model(renderer, "resources/suzanne.obj");
+            plane = new Model(renderer, "resources/plane.obj");
+
+            dragon.Transform.Scale = new Vector3(0.5f);
+            dragon.Transform.Position = new Vector3(-0.1f, 0, -0.25f);
+
+            suzanne.Transform.Scale = new Vector3(0.25f);
+            suzanne.Transform.Position = new Vector3(0.2f, 0, 0);
+
+            plane.Transform.Scale = new Vector3(2);
+            plane.Transform.Position = new Vector3(0, -0.35f, -0.5f);
         }
 
         public void Dispose() {
@@ -67,6 +84,9 @@ namespace VkDragons {
             modelSetLayout.Dispose();
             camUniform.Dispose();
             lightUniform.Dispose();
+            dragon.Dispose();
+            suzanne.Dispose();
+            plane.Dispose();
             renderer.Dispose();
         }
 
