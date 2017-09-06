@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Numerics;
+using System.Collections.Generic;
 
 using CSGL.GLFW;
 using CSGL.Vulkan;
@@ -28,6 +29,9 @@ namespace VkDragons {
         Input input;
 
         Sampler sampler;
+        DescriptorSetLayout uniformSetLayout;
+        DescriptorSetLayout textureSetLayout;
+        DescriptorSetLayout modelSetLayout;
 
         public Scene(Window window) {
             renderer = new Renderer(window);
@@ -35,10 +39,16 @@ namespace VkDragons {
             input = new Input(window, this, renderer, camera);
 
             CreateSampler();
+            CreateUniformSetLayout();
+            CreateTextureSetLayout();
+            CreateModelSetLayout();
         }
 
         public void Dispose() {
             sampler.Dispose();
+            uniformSetLayout.Dispose();
+            textureSetLayout.Dispose();
+            modelSetLayout.Dispose();
             renderer.Dispose();
         }
 
@@ -60,6 +70,55 @@ namespace VkDragons {
             };
 
             sampler = new Sampler(renderer.Device, info);
+        }
+
+        void CreateUniformSetLayout() {
+            DescriptorSetLayoutCreateInfo info = new DescriptorSetLayoutCreateInfo {
+                bindings = new List<VkDescriptorSetLayoutBinding> {
+                    new VkDescriptorSetLayoutBinding {
+                        binding = 0,
+                        descriptorType = VkDescriptorType.UniformBuffer,
+                        descriptorCount = 1,
+                        stageFlags = VkShaderStageFlags.VertexBit | VkShaderStageFlags.FragmentBit
+                    }
+                }
+            };
+
+            uniformSetLayout = new DescriptorSetLayout(renderer.Device, info);
+        }
+
+        void CreateTextureSetLayout() {
+            DescriptorSetLayoutCreateInfo info = new DescriptorSetLayoutCreateInfo {
+                bindings = new List<VkDescriptorSetLayoutBinding> {
+                    new VkDescriptorSetLayoutBinding {
+                        binding = 0,
+                        descriptorType = VkDescriptorType.CombinedImageSampler,
+                        descriptorCount = 1,
+                        stageFlags = VkShaderStageFlags.FragmentBit
+                    }
+                }
+            };
+
+            textureSetLayout = new DescriptorSetLayout(renderer.Device, info);
+        }
+
+        void CreateModelSetLayout() {
+            List<VkDescriptorSetLayoutBinding> bindings = new List<VkDescriptorSetLayoutBinding>(6);
+
+            for (int i = 0; i < 6; i++) {
+                bindings.Add(new VkDescriptorSetLayoutBinding {
+                    binding = (uint)i,
+                    descriptorType = VkDescriptorType.CombinedImageSampler,
+                    descriptorCount = 1,
+                    stageFlags = VkShaderStageFlags.FragmentBit
+                });
+            }
+
+            DescriptorSetLayoutCreateInfo info = new DescriptorSetLayoutCreateInfo {
+                bindings = bindings
+            };
+
+            modelSetLayout = new DescriptorSetLayout(renderer.Device, info);
         }
     }
 }
