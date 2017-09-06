@@ -99,6 +99,8 @@ namespace VkDragons {
                 planeColor, planeNormal, planeEffects,
                 skyColor, skySmallColor
             };
+
+            UploadResources(textures);
         }
 
         public void Dispose() {
@@ -113,6 +115,22 @@ namespace VkDragons {
             plane.Dispose();
             textures.Dispose();
             renderer.Dispose();
+        }
+
+        void UploadResources(IList<Texture> textures) {
+            CommandBuffer commandBuffer = renderer.GetSingleUseCommandBuffer();
+
+            using (var stagingBuffers = new DisposableList<StagingBuffer>()) {
+                foreach (var texture in textures) {
+                    texture.UploadData(commandBuffer, stagingBuffers);
+                }
+
+                dragon.UploadData(commandBuffer, stagingBuffers);
+                suzanne.UploadData(commandBuffer, stagingBuffers);
+                plane.UploadData(commandBuffer, stagingBuffers);
+
+                renderer.SubmitCommandBuffer(commandBuffer);
+            }
         }
 
         public void Resize(int width, int height) {
