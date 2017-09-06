@@ -37,12 +37,6 @@ namespace VkDragons {
             }
         }
 
-        public CommandPool CommandPool {
-            get {
-                return CommandPool;
-            }
-        }
-
         public bool Gamma { get; private set; }
 
         public int Width { get; private set; }
