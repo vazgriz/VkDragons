@@ -15,11 +15,13 @@ namespace VkDragons {
         public uint IndexCount { get; private set; }
 
         Buffer[] buffers;
+        Allocation[] allocations;
 
         public Model(Renderer renderer, string fileName) {
             this.renderer = renderer;
 
             buffers = new Buffer[6];
+            allocations = new Allocation[6];
             mesh = new Mesh(fileName);
             Transform = new Transform();
             IndexCount = (uint)mesh.Indices.Count;
@@ -77,7 +79,7 @@ namespace VkDragons {
             commandBuffer.DrawIndexed(IndexCount, 1, 0, 0, 0);
         }
 
-        Buffer CreateBuffer(ulong size, VkBufferUsageFlags usage) {
+        void CreateBuffer(int index, ulong size, VkBufferUsageFlags usage) {
             BufferCreateInfo info = new BufferCreateInfo();
             info.size = size;
             info.usage = usage;
@@ -90,21 +92,22 @@ namespace VkDragons {
 
             buffer.Bind(alloc.memory, alloc.offset);
 
-            return buffer;
+            buffers[index] = buffer;
+            allocations[index] = alloc;
         }
 
         void CreateBuffers() {
-            buffers[0] = CreateBuffer((ulong)mesh.Positions.Count * (ulong)Interop.SizeOf<Vector3>(),
+            CreateBuffer(0, (ulong)mesh.Positions.Count * (ulong)Interop.SizeOf<Vector3>(),
                 VkBufferUsageFlags.VertexBufferBit | VkBufferUsageFlags.TransferDstBit);
-            buffers[1] = CreateBuffer((ulong)mesh.Normals.Count * (ulong)Interop.SizeOf<Vector3>(),
+            CreateBuffer(1, (ulong)mesh.Normals.Count * (ulong)Interop.SizeOf<Vector3>(),
                 VkBufferUsageFlags.VertexBufferBit | VkBufferUsageFlags.TransferDstBit);
-            buffers[2] = CreateBuffer((ulong)mesh.Tangents.Count * (ulong)Interop.SizeOf<Vector3>(),
+            CreateBuffer(2, (ulong)mesh.Tangents.Count * (ulong)Interop.SizeOf<Vector3>(),
                 VkBufferUsageFlags.VertexBufferBit | VkBufferUsageFlags.TransferDstBit);
-            buffers[3] = CreateBuffer((ulong)mesh.Binormals.Count * (ulong)Interop.SizeOf<Vector3>(),
+            CreateBuffer(3, (ulong)mesh.Binormals.Count * (ulong)Interop.SizeOf<Vector3>(),
                 VkBufferUsageFlags.VertexBufferBit | VkBufferUsageFlags.TransferDstBit);
-            buffers[4] = CreateBuffer((ulong)mesh.TexCoords.Count * (ulong)Interop.SizeOf<Vector2>(),
+            CreateBuffer(4, (ulong)mesh.TexCoords.Count * (ulong)Interop.SizeOf<Vector2>(),
                 VkBufferUsageFlags.VertexBufferBit | VkBufferUsageFlags.TransferDstBit);
-            buffers[5] = CreateBuffer(IndexCount * (ulong)Interop.SizeOf<uint>(),
+            CreateBuffer(5, IndexCount * (ulong)Interop.SizeOf<uint>(),
                 VkBufferUsageFlags.IndexBufferBit | VkBufferUsageFlags.TransferDstBit);
         }
 
