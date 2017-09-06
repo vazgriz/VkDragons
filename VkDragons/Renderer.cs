@@ -140,6 +140,31 @@ namespace VkDragons {
             RecreateSwapchain();
         }
 
+        public CommandBuffer GetSingleUseCommandBuffer() {
+            CommandBuffer commandBuffer = commandPool.Allocate(VkCommandBufferLevel.Primary);
+
+            commandBuffer.Begin(new CommandBufferBeginInfo {
+                flags = VkCommandBufferUsageFlags.OneTimeSubmitBit
+            });
+
+            return commandBuffer;
+        }
+
+        public void SubmitCommandBuffer(CommandBuffer commandBuffer) {
+            commandBuffer.End();
+
+            SubmitInfo info = new SubmitInfo {
+                commandBuffers = new List<CommandBuffer> {
+                    commandBuffer
+                }
+            };
+
+            graphicsQueue.Submit(new List<SubmitInfo> { info });
+            graphicsQueue.WaitIdle();
+
+            commandPool.Free(new List<CommandBuffer> { commandBuffer });
+        }
+
         void CreateInstance() {
             var extensions = new List<string>(GLFW.GetRequiredInstanceExceptions());
             InstanceCreateInfo info = new InstanceCreateInfo {
