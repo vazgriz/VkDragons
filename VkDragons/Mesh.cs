@@ -55,7 +55,7 @@ namespace VkDragons {
                         if (tokens.Count < 3) continue;
 
                         Vector2 uv = new Vector2(float.Parse(tokens[1]), float.Parse(tokens[2]));
-                        TexCoords.Add(uv);
+                        texCoordsTemp.Add(uv);
                     } else if (tokens[0] == "f") {
                         if (tokens.Count < 4) continue;
 
@@ -87,16 +87,16 @@ namespace VkDragons {
                 List<string> subtokens = new List<string>(str.Split('/'));
                 if (subtokens.Count == 0) continue;
 
-                uint index1 = uint.Parse(subtokens[0]);
+                uint index1 = uint.Parse(subtokens[0]) - 1;
                 Positions.Add(positionsTemp[(int)index1]);
 
                 if (hasUV) {
-                    uint index2 = uint.Parse(subtokens[1]);
+                    uint index2 = uint.Parse(subtokens[1]) - 1;
                     TexCoords.Add(texCoordsTemp[(int)index2]);
                 }
 
                 if (hasNormals) {
-                    uint index3 = uint.Parse(subtokens[2]);
+                    uint index3 = uint.Parse(subtokens[2]) - 1;
                     Normals.Add(normalsTemp[(int)index3]);
                 }
 
