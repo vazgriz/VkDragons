@@ -41,6 +41,8 @@ namespace VkDragons {
         Model suzanne;
         Model plane;
 
+        DisposableList<Texture> textures;
+
         public uint Width { get; private set; }
         public uint Height { get; private set; }
         public double Time { get; private set; }
@@ -75,6 +77,28 @@ namespace VkDragons {
 
             plane.Transform.Scale = new Vector3(2);
             plane.Transform.Position = new Vector3(0, -0.35f, -0.5f);
+
+            var dragonColor = new Texture(renderer, TextureType.Image, "resources/dragon_texture_color.png", true);
+            var dragonNormal = new Texture(renderer, TextureType.Image, "resources/dragon_texture_normal.png");
+            var dragonEffects = new Texture(renderer, TextureType.Image, "resources/dragon_texture_ao_specular_reflection.png");
+
+            var suzanneColor = new Texture(renderer, TextureType.Image, "resources/suzanne_texture_color.png", true);
+            var suzanneNormal = new Texture(renderer, TextureType.Image, "resources/suzanne_texture_normal.png");
+            var suzanneEffects = new Texture(renderer, TextureType.Image, "resources/suzanne_texture_ao_specular_reflection.png");
+
+            var planeColor = new Texture(renderer, TextureType.Image, "resources/plane_texture_color.png", true);
+            var planeNormal = new Texture(renderer, TextureType.Image, "resources/plane_texture_normal.png");
+            var planeEffects = new Texture(renderer, TextureType.Image, "resources/plane_texture_depthmap.png");
+
+            var skyColor = new Texture(renderer, TextureType.Cubemap, "resources/cubemap/cubemap", true);
+            var skySmallColor = new Texture(renderer, TextureType.Cubemap, "resources/cubemap/cubemap_diff", true);
+
+            textures = new DisposableList<Texture> {
+                dragonColor, dragonNormal, dragonEffects,
+                suzanneColor, suzanneNormal, suzanneEffects,
+                planeColor, planeNormal, planeEffects,
+                skyColor, skySmallColor
+            };
         }
 
         public void Dispose() {
@@ -87,6 +111,7 @@ namespace VkDragons {
             dragon.Dispose();
             suzanne.Dispose();
             plane.Dispose();
+            textures.Dispose();
             renderer.Dispose();
         }
 
