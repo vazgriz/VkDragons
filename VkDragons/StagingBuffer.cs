@@ -10,14 +10,15 @@ namespace VkDragons {
         Renderer renderer;
         ulong size;
         Buffer buffer;
+        Allocation alloc;
         IntPtr mapping;
 
         public StagingBuffer(Renderer renderer, ulong size) {
             this.renderer = renderer;
             this.size = size;
 
-            buffer = CreateHostBuffer(size, VkBufferUsageFlags.None);
-            mapping = renderer.Memory.GetMapping(buffer.Memory);
+            CreateHostBuffer(size, VkBufferUsageFlags.None);
+            mapping = (IntPtr)((ulong)renderer.Memory.GetMapping(buffer.Memory) + alloc.offset);
         }
 
         public void Dispose() {
@@ -28,7 +29,7 @@ namespace VkDragons {
             Interop.Copy(data, mapping);
         }
 
-        Buffer CreateHostBuffer(ulong size, VkBufferUsageFlags usage) {
+        void CreateHostBuffer(ulong size, VkBufferUsageFlags usage) {
             BufferCreateInfo info = new BufferCreateInfo {
                 size = size,
                 usage = usage | VkBufferUsageFlags.TransferSrcBit,
@@ -42,7 +43,8 @@ namespace VkDragons {
 
             buffer.Bind(alloc.memory, alloc.offset);
 
-            return buffer;
+            this.buffer = buffer;
+            this.alloc = alloc;
         }
 
         public void CopyToBuffer(CommandBuffer commandBuffer, Buffer dest) {
