@@ -2,6 +2,7 @@
 using System.Numerics;
 using System.Collections.Generic;
 
+using CSGL;
 using CSGL.GLFW;
 using CSGL.Vulkan;
 
@@ -33,6 +34,9 @@ namespace VkDragons {
         DescriptorSetLayout textureSetLayout;
         DescriptorSetLayout modelSetLayout;
 
+        UniformBuffer camUniform;
+        UniformBuffer lightUniform;
+
         public Scene(Window window) {
             renderer = new Renderer(window);
             camera = new Camera(45, window.FramebufferWidth, window.FramebufferHeight);
@@ -42,6 +46,9 @@ namespace VkDragons {
             CreateUniformSetLayout();
             CreateTextureSetLayout();
             CreateModelSetLayout();
+
+            camUniform = new UniformBuffer(renderer, (ulong)Interop.SizeOf<CameraUniform>(), uniformSetLayout);
+            lightUniform = new UniformBuffer(renderer, (ulong)Interop.SizeOf<LightUniform>(), uniformSetLayout);
         }
 
         public void Dispose() {
@@ -49,6 +56,8 @@ namespace VkDragons {
             uniformSetLayout.Dispose();
             textureSetLayout.Dispose();
             modelSetLayout.Dispose();
+            camUniform.Dispose();
+            lightUniform.Dispose();
             renderer.Dispose();
         }
 
