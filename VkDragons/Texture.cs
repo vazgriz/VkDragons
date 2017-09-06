@@ -19,7 +19,6 @@ namespace VkDragons {
         Renderer renderer;
         Image image;
         Allocation alloc;
-        ImageView imageView;
 
         List<List<byte>> data;
         List<Vector2i> mipChain;
@@ -29,6 +28,7 @@ namespace VkDragons {
         public VkFormat Format { get; private set; }
         public uint Width { get; private set; }
         public uint Height { get; private set; }
+        public ImageView ImageView { get; private set; }
 
         public Texture(Renderer renderer, TextureType type, string filename, bool gammaSpace = false) {
             this.renderer = renderer;
@@ -63,7 +63,7 @@ namespace VkDragons {
         public void Dispose() {
             renderer.Memory.Free(alloc);
             image.Dispose();
-            imageView.Dispose();
+            ImageView.Dispose();
         }
 
         void Init(string filename, bool gammaSpace) {
@@ -195,7 +195,7 @@ namespace VkDragons {
                 }
             };
 
-            imageView = new ImageView(renderer.Device, info);
+            ImageView = new ImageView(renderer.Device, info);
         }
 
         void CalculateMipChain() {
