@@ -27,12 +27,23 @@ namespace VkDragons {
             }
         }
 
+        Vector3 scale;
+        public Vector3 Scale {
+            get {
+                return scale;
+            }
+            set {
+                scale = value;
+                Apply();
+            }
+        }
+
         public Transform() {
             WorldMatrix = Matrix4x4.Identity;
         }
 
         void Apply() {
-            WorldMatrix = Matrix4x4.CreateTranslation(position) * Matrix4x4.CreateFromQuaternion(rotation);
+            WorldMatrix = Matrix4x4.CreateTranslation(position) * Matrix4x4.CreateFromQuaternion(rotation) * Matrix4x4.CreateScale(scale);
         }
     }
 }
