@@ -145,7 +145,16 @@ namespace VkDragons {
         }
 
         public void UploadData(CommandBuffer commandBuffer, DisposableList<StagingBuffer> stagingBuffers) {
+            Transition(commandBuffer, VkImageLayout.Undefined, VkImageLayout.General);
 
+            for (int i = 0; i < data.Count; i++) {
+                var stagingBuffer = new StagingBuffer(renderer, (ulong)Interop.SizeOf(data[i]));
+                stagingBuffer.Fill(data[i]);
+                stagingBuffers.Add(stagingBuffer);
+            }
+
+            GenerateMipChain(commandBuffer);
+            Transition(commandBuffer, VkImageLayout.General, VkImageLayout.ShaderReadOnlyOptimal);
         }
 
         void CreateImage(VkImageUsageFlags usage, VkImageCreateFlags flags) {
