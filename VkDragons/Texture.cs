@@ -112,7 +112,7 @@ namespace VkDragons {
             Width = width;
             Height = height;
 
-            CreateImage(VkImageUsageFlags.TransferDstBit | VkImageUsageFlags.TransferSrcBit | VkImageUsageFlags.SampledBit,
+            CreateImage(VkImageUsageFlags.TransferDstBit | VkImageUsageFlags.TransferSrcBit | VkImageUsageFlags.SampledBit | usage,
                 VkImageCreateFlags.None);
             CreateImageView(VkImageAspectFlags.ColorBit, VkImageViewType._2d);
         }
