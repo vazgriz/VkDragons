@@ -242,6 +242,7 @@ namespace VkDragons {
                 initialLayout = VkImageLayout.Undefined,
                 finalLayout = VkImageLayout.ShaderReadOnlyOptimal
             };
+
             AttachmentDescription depthAttachment = new AttachmentDescription {
                 format = lightDepth.Format,
                 samples = VkSampleCountFlags._1Bit,
