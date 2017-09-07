@@ -223,13 +223,35 @@ namespace VkDragons {
             }
         }
 
+        void UpdateUniform() {
+            Matrix4x4 inverse;
+            Matrix4x4.Invert(camera.View, out inverse);
+
+            camUniform.Fill(new CameraUniform {
+                camProjection = camera.Projection,
+                camView = camera.View,
+                camRotationOnlyView = camera.RotationOnlyView,
+                camViewInverse = inverse
+            });
+
+            lightUniform.Fill(new LightUniform {
+                lightPosition = light.Position,
+                lightProjection = light.Projection,
+                lightView = light.View,
+                lightIa = light.Ia,
+                lightId = light.Id,
+                lightIs = light.Is,
+                lightShininess = light.Shininess
+            });
+        }
+
         public void Update(double elapsed) {
             Time += elapsed;
             input.Update(elapsed);
             camera.Update();
             light.Position = new Vector4(new Vector3(2.0f, (1.5f + (float)Math.Sin(0.5f * Time)), 2.0f), 0);
             light.Update();
-
+            UpdateUniform();
             suzanne.Transform.Rotation = Quaternion.CreateFromYawPitchRoll((float)Time, 0, 0);
         }
 
