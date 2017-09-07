@@ -68,6 +68,7 @@
     <Compile Include="Allocator.cs" />
     <Compile Include="Camera.cs" />
     <Compile Include="Input.cs" />
+    <Compile Include="Light.cs" />
     <Compile Include="Material.cs" />
     <Compile Include="Memory.cs" />
     <Compile Include="Mesh.cs" />

@@ -28,6 +28,7 @@ namespace VkDragons {
         Renderer renderer;
         Camera camera;
         Input input;
+        Light light;
 
         List<CommandBuffer> commandBuffers;
 
@@ -85,6 +86,7 @@ namespace VkDragons {
             renderer = new Renderer(window);
             camera = new Camera(45, window.FramebufferWidth, window.FramebufferHeight);
             input = new Input(window, this, renderer, camera);
+            light = new Light();
             commandBuffers = new List<CommandBuffer>();
 
             Width = (uint)window.FramebufferWidth;
@@ -225,6 +227,8 @@ namespace VkDragons {
             Time += elapsed;
             input.Update(elapsed);
             camera.Update();
+            light.Position = new Vector4(new Vector3(2.0f, (1.5f + (float)Math.Sin(0.5f * Time)), 2.0f), 0);
+            light.Update();
 
             suzanne.Transform.Rotation = Quaternion.CreateFromYawPitchRoll((float)Time, 0, 0);
         }
