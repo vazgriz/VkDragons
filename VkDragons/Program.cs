@@ -4,6 +4,10 @@ using CSGL.GLFW;
 
 namespace VkDragons {
     class Program {
+        bool resizedFlag;
+        int width;
+        int height;
+
         static void Main(string[] args) {
             new Program().Run();
         }
@@ -14,15 +18,27 @@ namespace VkDragons {
             GLFW.WindowHint(WindowHint.Visible, 0);
 
             Window window = new Window(800, 600, "Here be Dragons");
+            window.OnSizeChanged += OnResize;
 
             using (Scene scene = new Scene(window)) {
                 window.Visible = true;
                 while (!window.ShouldClose) {
                     GLFW.PollEvents();
+
+                    if (resizedFlag) {
+                        scene.Resize(width, height);
+                        resizedFlag = false;
+                    }
                 }
             }
 
             GLFW.Terminate();
+        }
+
+        void OnResize(int width, int height) {
+            resizedFlag = true;
+            this.width = width;
+            this.height = height;
         }
     }
 }
