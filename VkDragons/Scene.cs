@@ -126,9 +126,9 @@ namespace VkDragons {
 
             UploadResources(textures);
 
-            lightDepth = new Texture(renderer, TextureType.Depth, 512, 512, VkImageUsageFlags.SampledBit);
-            lightColor = new Texture(renderer, TextureType.Image, lightDepth.Width, lightDepth.Height, VkImageUsageFlags.SampledBit, VkFormat.R8g8Unorm);
-            boxBlur = new Texture(renderer, TextureType.Image, lightDepth.Width, lightDepth.Height, VkImageUsageFlags.SampledBit, lightColor.Format);
+            lightDepth = new Texture(renderer, TextureType.Depth, 512, 512, VkImageUsageFlags.DepthStencilAttachmentBit);
+            lightColor = new Texture(renderer, TextureType.Image, lightDepth.Width, lightDepth.Height, VkImageUsageFlags.ColorAttachmentBit | VkImageUsageFlags.SampledBit, VkFormat.R8g8Unorm);
+            boxBlur = new Texture(renderer, TextureType.Image, lightDepth.Width, lightDepth.Height, VkImageUsageFlags.ColorAttachmentBit | VkImageUsageFlags.SampledBit, lightColor.Format);
 
             textures.Add(lightDepth);
             textures.Add(lightColor);
@@ -139,6 +139,9 @@ namespace VkDragons {
             CreateScreenQuadRenderPass();
             CreateLightRenderPass();
             CreateBoxBlurRenderPass();
+
+            lightFramebuffer = CreateFramebuffer(lightRenderPass, new List<Texture> { lightColor, lightDepth });
+            boxBlurFramebuffer = CreateFramebuffer(boxBlurRenderPass, new List<Texture> { boxBlur });
         }
 
         public void Dispose() {
@@ -163,6 +166,8 @@ namespace VkDragons {
             screenQuadRenderPass.Dispose();
             lightRenderPass.Dispose();
             boxBlurRenderPass.Dispose();
+            lightFramebuffer.Dispose();
+            boxBlurFramebuffer.Dispose();
             renderer.Dispose();
         }
 
@@ -405,6 +410,24 @@ namespace VkDragons {
             };
 
             modelSetLayout = new DescriptorSetLayout(renderer.Device, info);
+        }
+
+        Framebuffer CreateFramebuffer(RenderPass renderPass, List<Texture> textures) {
+            List<ImageView> imageViews = new List<ImageView>(textures.Count);
+
+            foreach (var tex in textures) {
+                imageViews.Add(tex.ImageView);
+            }
+
+            FramebufferCreateInfo info = new FramebufferCreateInfo {
+                renderPass = renderPass,
+                width = textures[0].Width,
+                height = textures[0].Height,
+                layers = 1,
+                attachments = imageViews
+            };
+
+            return new Framebuffer(renderer.Device, info);
         }
     }
 }
