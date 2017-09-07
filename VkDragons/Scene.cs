@@ -140,8 +140,8 @@ namespace VkDragons {
             CreateLightRenderPass();
             CreateBoxBlurRenderPass();
 
-            lightFramebuffer = CreateFramebuffer(lightRenderPass, new List<Texture> { lightColor, lightDepth });
-            boxBlurFramebuffer = CreateFramebuffer(boxBlurRenderPass, new List<Texture> { boxBlur });
+            lightFramebuffer = CreateFramebuffer(lightRenderPass, lightColor.Width, lightColor.Height, new List<ImageView> { lightColor.ImageView, lightDepth.ImageView });
+            boxBlurFramebuffer = CreateFramebuffer(boxBlurRenderPass, boxBlur.Width, boxBlur.Height, new List<ImageView> { boxBlur.ImageView });
         }
 
         public void Dispose() {
@@ -412,17 +412,11 @@ namespace VkDragons {
             modelSetLayout = new DescriptorSetLayout(renderer.Device, info);
         }
 
-        Framebuffer CreateFramebuffer(RenderPass renderPass, List<Texture> textures) {
-            List<ImageView> imageViews = new List<ImageView>(textures.Count);
-
-            foreach (var tex in textures) {
-                imageViews.Add(tex.ImageView);
-            }
-
+        Framebuffer CreateFramebuffer(RenderPass renderPass, uint width, uint height, List<ImageView> imageViews) {
             FramebufferCreateInfo info = new FramebufferCreateInfo {
                 renderPass = renderPass,
-                width = textures[0].Width,
-                height = textures[0].Height,
+                width = width,
+                height = height,
                 layers = 1,
                 attachments = imageViews
             };
