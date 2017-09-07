@@ -17,7 +17,7 @@ namespace VkDragons {
             GLFW.WindowHint(WindowHint.ClientAPI, (int)ClientAPI.NoAPI);
             GLFW.WindowHint(WindowHint.Visible, 0);
 
-            Window window = new Window(800, 600, "Here be Dragons");
+            Window window = new Window(800, 600, "Here Be Dragons");
             window.OnSizeChanged += OnResize;
 
             using (Scene scene = new Scene(window)) {
