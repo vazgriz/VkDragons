@@ -40,6 +40,12 @@ namespace VkDragons {
         RenderPass lightRenderPass;
         RenderPass boxBlurRenderPass;
         RenderPass screenQuadRenderPass;
+        RenderPass geometryRenderPass;
+        RenderPass mainRenderPass;
+
+        List<Framebuffer> mainFramebuffers;
+        Framebuffer geometryFramebuffer;
+        Framebuffer fxaaFramebuffer;
 
         Model dragon;
         Model suzanne;
@@ -55,8 +61,17 @@ namespace VkDragons {
         Texture lightDepth;
         Texture lightColor;
         Texture boxBlur;
+        Framebuffer lightFramebuffer;
+        Framebuffer boxBlurFramebuffer;
 
         Material lightMat;
+
+        Texture depth;
+        Texture geometryTarget;
+        Texture fxaaTarget;
+
+        Material geometryMat;
+        Material fxaaMat;
 
         DisposableList<Texture> textures;
 
@@ -142,10 +157,13 @@ namespace VkDragons {
 
             lightFramebuffer = CreateFramebuffer(lightRenderPass, lightColor.Width, lightColor.Height, new List<ImageView> { lightColor.ImageView, lightDepth.ImageView });
             boxBlurFramebuffer = CreateFramebuffer(boxBlurRenderPass, boxBlur.Width, boxBlur.Height, new List<ImageView> { boxBlur.ImageView });
+
+            CreateSwapchainResources(Width, Height);
         }
 
         public void Dispose() {
             renderer.Device.WaitIdle();
+            CleanupSwapchainResources();
             sampler.Dispose();
             uniformSetLayout.Dispose();
             textureSetLayout.Dispose();
@@ -171,6 +189,19 @@ namespace VkDragons {
             renderer.Dispose();
         }
 
+        void CleanupSwapchainResources() {
+            depth.Dispose();
+            geometryTarget.Dispose();
+            fxaaTarget.Dispose();
+            geometryMat.Dispose();
+            fxaaMat.Dispose();
+            geometryRenderPass.Dispose();
+            mainRenderPass.Dispose();
+            foreach (var fb in mainFramebuffers) fb.Dispose();
+            geometryFramebuffer.Dispose();
+            fxaaFramebuffer.Dispose();
+        }
+
         void UploadResources(IList<Texture> textures) {
             CommandBuffer commandBuffer = renderer.GetSingleUseCommandBuffer();
 
@@ -189,6 +220,26 @@ namespace VkDragons {
 
         public void Resize(int width, int height) {
             renderer.Resize(width, height);
+        }
+
+        void CreateSwapchainResources(uint width, uint height) {
+            depth = new Texture(renderer, TextureType.Depth, width, height, VkImageUsageFlags.None);
+            geometryTarget = new Texture(renderer, TextureType.Image, width, height, VkImageUsageFlags.ColorAttachmentBit | VkImageUsageFlags.SampledBit, VkFormat.R8g8b8a8Unorm);
+            fxaaTarget = new Texture(renderer, TextureType.Image, width, height, VkImageUsageFlags.ColorAttachmentBit | VkImageUsageFlags.SampledBit, VkFormat.R8g8b8a8Unorm);
+            geometryMat = new Material(renderer, sampler, new List<Texture> { geometryTarget });
+            fxaaMat = new Material(renderer, sampler, new List<Texture> { fxaaTarget });
+
+            CreateGeometryRenderPass();
+            CreateMainRenderPass();
+
+            mainFramebuffers = new List<Framebuffer>(renderer.SwapchainImageViews.Count);
+
+            for (int i = 0; i < renderer.SwapchainImageViews.Count; i++) {
+                mainFramebuffers.Add(CreateFramebuffer(mainRenderPass, width, height, new List<ImageView> { renderer.SwapchainImageViews[i] }));
+            }
+
+            geometryFramebuffer = CreateFramebuffer(geometryRenderPass, width, height, new List<ImageView> { geometryTarget.ImageView, depth.ImageView });
+            fxaaFramebuffer = CreateFramebuffer(screenQuadRenderPass, width, height, new List<ImageView> { fxaaTarget.ImageView });
         }
 
         void CreateScreenQuadRenderPass() {
@@ -345,6 +396,115 @@ namespace VkDragons {
             };
 
             boxBlurRenderPass = new RenderPass(renderer.Device, info);
+        }
+
+        void CreateGeometryRenderPass() {
+            AttachmentDescription colorAttachment = new AttachmentDescription {
+                format = geometryTarget.Format,
+                samples = VkSampleCountFlags._1Bit,
+                loadOp = VkAttachmentLoadOp.DontCare,
+                storeOp = VkAttachmentStoreOp.Store,
+                initialLayout = VkImageLayout.Undefined,
+                finalLayout = VkImageLayout.ShaderReadOnlyOptimal
+            };
+
+            AttachmentDescription depthAttachment = new AttachmentDescription {
+                format = depth.Format,
+                samples = VkSampleCountFlags._1Bit,
+                loadOp = VkAttachmentLoadOp.Clear,
+                storeOp = VkAttachmentStoreOp.DontCare,
+                initialLayout = VkImageLayout.Undefined,
+                finalLayout = VkImageLayout.DepthStencilAttachmentOptimal
+            };
+
+            AttachmentReference colorRef = new AttachmentReference {
+                attachment = 0,
+                layout = VkImageLayout.ColorAttachmentOptimal
+            };
+
+            AttachmentReference depthRef = new AttachmentReference {
+                attachment = 1,
+                layout = VkImageLayout.DepthStencilAttachmentOptimal
+            };
+
+            SubpassDescription subpass = new SubpassDescription {
+                pipelineBindPoint = VkPipelineBindPoint.Graphics,
+                colorAttachments = new List<AttachmentReference> { colorRef },
+                depthStencilAttachment = depthRef
+            };
+
+            SubpassDependency fromExternal = new SubpassDependency {
+                srcSubpass = uint.MaxValue, //VK_SUBPASS_EXTERNAL
+                dstSubpass = 0,
+                srcStageMask = VkPipelineStageFlags.ColorAttachmentOutputBit,
+                srcAccessMask = VkAccessFlags.ColorAttachmentWriteBit | VkAccessFlags.ShaderReadBit,
+                dstStageMask = VkPipelineStageFlags.ColorAttachmentOutputBit,
+                dstAccessMask = VkAccessFlags.ColorAttachmentWriteBit
+            };
+
+            SubpassDependency toExternal = new SubpassDependency {
+                srcSubpass = 0,
+                dstSubpass = uint.MaxValue, //VK_SUBPASS_EXTERNAL
+                srcStageMask = VkPipelineStageFlags.ColorAttachmentOutputBit,
+                srcAccessMask = VkAccessFlags.ColorAttachmentWriteBit,
+                dstStageMask = VkPipelineStageFlags.FragmentShaderBit | VkPipelineStageFlags.ColorAttachmentOutputBit,
+                dstAccessMask = VkAccessFlags.ShaderReadBit | VkAccessFlags.ColorAttachmentWriteBit
+            };
+
+            RenderPassCreateInfo info = new RenderPassCreateInfo {
+                attachments = new List<AttachmentDescription> { colorAttachment, depthAttachment },
+                subpasses = new List<SubpassDescription> { subpass },
+                dependencies = new List<SubpassDependency> { fromExternal, toExternal }
+            };
+
+            geometryRenderPass = new RenderPass(renderer.Device, info);
+        }
+
+        void CreateMainRenderPass() {
+            AttachmentDescription colorAttachment = new AttachmentDescription {
+                format = renderer.SwapchainFormat,
+                samples = VkSampleCountFlags._1Bit,
+                loadOp = VkAttachmentLoadOp.DontCare,
+                storeOp = VkAttachmentStoreOp.Store,
+                initialLayout = VkImageLayout.Undefined,
+                finalLayout = VkImageLayout.PresentSrcKhr
+            };
+
+            AttachmentReference colorRef = new AttachmentReference {
+                attachment = 0,
+                layout = VkImageLayout.ColorAttachmentOptimal
+            };
+
+            SubpassDescription subpass = new SubpassDescription {
+                pipelineBindPoint = VkPipelineBindPoint.Graphics,
+                colorAttachments = new List<AttachmentReference> { colorRef }
+            };
+
+            SubpassDependency fromExternal = new SubpassDependency {
+                srcSubpass = uint.MaxValue, //VK_SUBPASS_EXTERNAL
+                dstSubpass = 0,
+                srcStageMask = VkPipelineStageFlags.ColorAttachmentOutputBit,
+                srcAccessMask = VkAccessFlags.ColorAttachmentWriteBit | VkAccessFlags.ShaderReadBit,
+                dstStageMask = VkPipelineStageFlags.ColorAttachmentOutputBit,
+                dstAccessMask = VkAccessFlags.ColorAttachmentWriteBit
+            };
+
+            SubpassDependency toExternal = new SubpassDependency {
+                srcSubpass = 0,
+                dstSubpass = uint.MaxValue, //VK_SUBPASS_EXTERNAL
+                srcStageMask = VkPipelineStageFlags.ColorAttachmentOutputBit,
+                srcAccessMask = VkAccessFlags.ColorAttachmentWriteBit,
+                dstStageMask = VkPipelineStageFlags.BottomOfPipeBit,
+                dstAccessMask = VkAccessFlags.None
+            };
+
+            RenderPassCreateInfo info = new RenderPassCreateInfo {
+                attachments = new List<AttachmentDescription> { colorAttachment },
+                subpasses = new List<SubpassDescription> { subpass },
+                dependencies = new List<SubpassDependency> { fromExternal, toExternal }
+            };
+
+            mainRenderPass = new RenderPass(renderer.Device, info);
         }
 
         void CreateSampler() {
