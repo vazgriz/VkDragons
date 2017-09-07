@@ -155,6 +155,8 @@ namespace VkDragons {
 
             GenerateMipChain(commandBuffer);
             Transition(commandBuffer, VkImageLayout.General, VkImageLayout.ShaderReadOnlyOptimal);
+
+            data = null;
         }
 
         void CreateImage(VkImageUsageFlags usage, VkImageCreateFlags flags) {

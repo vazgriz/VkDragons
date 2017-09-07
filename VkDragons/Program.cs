@@ -26,6 +26,8 @@ namespace VkDragons {
                 double nextFPS = 0.25;
                 int frames = 0;
 
+                GC.Collect();
+
                 while (!window.ShouldClose) {
                     GLFW.PollEvents();
 

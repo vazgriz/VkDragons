@@ -126,6 +126,8 @@ namespace VkDragons {
             stagingBuffers[start + 3].Fill(mesh.Binormals);
             stagingBuffers[start + 4].Fill(mesh.TexCoords);
             stagingBuffers[start + 5].Fill(mesh.Indices);
+
+            mesh = null;
         }
 
         public static List<VkVertexInputBindingDescription> BindingDescriptions {
