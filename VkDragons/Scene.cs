@@ -219,7 +219,13 @@ namespace VkDragons {
         }
 
         public void Resize(int width, int height) {
+            Width = (uint)width;
+            Height = (uint)height;
             renderer.Resize(width, height);
+            camera.SetSize(width, height);
+            CleanupSwapchainResources();
+
+            CreateSwapchainResources(Width, Height);
         }
 
         void CreateSwapchainResources(uint width, uint height) {
