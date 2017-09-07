@@ -46,6 +46,7 @@ namespace VkDragons {
         Material dragonMat;
         Material suzanneMat;
         Material planeMat;
+        Material skyMat;
 
         DisposableList<Texture> textures;
 
@@ -104,6 +105,7 @@ namespace VkDragons {
             dragonMat = new Material(renderer, sampler, new List<Texture> { dragonColor, dragonNormal, dragonEffects });
             suzanneMat = new Material(renderer, sampler, new List<Texture> { suzanneColor, suzanneNormal, suzanneEffects });
             planeMat = new Material(renderer, sampler, new List<Texture> { planeColor, planeNormal, planeEffects });
+            skyMat = new Material(renderer, sampler, new List<Texture> { skyColor });
 
             textures = new DisposableList<Texture> {
                 dragonColor, dragonNormal, dragonEffects,
@@ -131,6 +133,7 @@ namespace VkDragons {
             dragonMat.Dispose();
             suzanneMat.Dispose();
             planeMat.Dispose();
+            skyMat.Dispose();
             textures.Dispose();
             renderer.Dispose();
         }
