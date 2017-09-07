@@ -48,6 +48,12 @@ namespace VkDragons {
         Material planeMat;
         Material skyMat;
 
+        Texture lightDepth;
+        Texture lightColor;
+        Texture boxBlur;
+
+        Material lightMat;
+
         DisposableList<Texture> textures;
 
         public uint Width { get; private set; }
@@ -115,6 +121,16 @@ namespace VkDragons {
             };
 
             UploadResources(textures);
+
+            lightDepth = new Texture(renderer, TextureType.Depth, 512, 512, VkImageUsageFlags.SampledBit);
+            lightColor = new Texture(renderer, TextureType.Image, lightDepth.Width, lightDepth.Height, VkImageUsageFlags.SampledBit, VkFormat.R8g8Unorm);
+            boxBlur = new Texture(renderer, TextureType.Image, lightDepth.Width, lightDepth.Height, VkImageUsageFlags.SampledBit, lightColor.Format);
+
+            textures.Add(lightDepth);
+            textures.Add(lightColor);
+            textures.Add(boxBlur);
+
+            lightMat = new Material(renderer, sampler, new List<Texture> { lightColor });
         }
 
         public void Dispose() {
@@ -134,6 +150,7 @@ namespace VkDragons {
             suzanneMat.Dispose();
             planeMat.Dispose();
             skyMat.Dispose();
+            lightMat.Dispose();
             textures.Dispose();
             renderer.Dispose();
         }
