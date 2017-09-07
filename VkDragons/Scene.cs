@@ -218,6 +218,14 @@ namespace VkDragons {
             }
         }
 
+        public void Update(double elapsed) {
+            Time += elapsed;
+            input.Update(elapsed);
+            camera.Update();
+
+            suzanne.Transform.Rotation = Quaternion.CreateFromYawPitchRoll((float)Time, 0, 0);
+        }
+
         public void Resize(int width, int height) {
             Width = (uint)width;
             Height = (uint)height;

@@ -22,6 +22,7 @@ namespace VkDragons {
 
             using (Scene scene = new Scene(window)) {
                 window.Visible = true;
+                double lastTime = 0;
                 while (!window.ShouldClose) {
                     GLFW.PollEvents();
 
@@ -29,6 +30,11 @@ namespace VkDragons {
                         scene.Resize(width, height);
                         resizedFlag = false;
                     }
+
+                    double now = GLFW.GetTime();
+                    double elapsed = now - lastTime;
+
+                    scene.Update(elapsed);
                 }
             }
 
