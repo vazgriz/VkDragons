@@ -29,6 +29,8 @@ namespace VkDragons {
         Camera camera;
         Input input;
 
+        List<CommandBuffer> commandBuffers;
+
         Sampler sampler;
         DescriptorSetLayout uniformSetLayout;
         DescriptorSetLayout textureSetLayout;
@@ -83,6 +85,7 @@ namespace VkDragons {
             renderer = new Renderer(window);
             camera = new Camera(45, window.FramebufferWidth, window.FramebufferHeight);
             input = new Input(window, this, renderer, camera);
+            commandBuffers = new List<CommandBuffer>();
 
             Width = (uint)window.FramebufferWidth;
             Height = (uint)window.FramebufferHeight;
@@ -226,6 +229,14 @@ namespace VkDragons {
             suzanne.Transform.Rotation = Quaternion.CreateFromYawPitchRoll((float)Time, 0, 0);
         }
 
+        public void Render() {
+            renderer.Acquire();
+            uint index = renderer.ImageIndex;
+            RecordCommandBuffer(index);
+            renderer.Submit(commandBuffers[(int)index]);
+            renderer.Present();
+        }
+
         public void Resize(int width, int height) {
             Width = (uint)width;
             Height = (uint)height;
@@ -234,6 +245,7 @@ namespace VkDragons {
             CleanupSwapchainResources();
 
             CreateSwapchainResources(Width, Height);
+            AllocateCommandBuffers();
         }
 
         void CreateSwapchainResources(uint width, uint height) {
@@ -254,6 +266,32 @@ namespace VkDragons {
 
             geometryFramebuffer = CreateFramebuffer(geometryRenderPass, width, height, new List<ImageView> { geometryTarget.ImageView, depth.ImageView });
             fxaaFramebuffer = CreateFramebuffer(screenQuadRenderPass, width, height, new List<ImageView> { fxaaTarget.ImageView });
+        }
+
+        void RecordCommandBuffer(uint imageIndex) {
+            CommandBuffer commandBuffer = commandBuffers[(int)imageIndex];
+
+            commandBuffer.Reset(VkCommandBufferResetFlags.None);
+
+            commandBuffer.Begin(new CommandBufferBeginInfo {
+                flags = VkCommandBufferUsageFlags.OneTimeSubmitBit
+            });
+
+            RecordMainPass(commandBuffer, imageIndex);
+
+            commandBuffer.End();
+        }
+
+        void RecordMainPass(CommandBuffer commandBuffer, uint imageIndex) {
+            commandBuffer.BeginRenderPass(new RenderPassBeginInfo {
+                renderPass = mainRenderPass,
+                framebuffer = mainFramebuffers[(int)imageIndex],
+                renderArea = new VkRect2D {
+                    extent = renderer.SwapchainExtent
+                }
+            }, VkSubpassContents.Inline);
+
+            commandBuffer.EndRenderPass();
         }
 
         void CreateScreenQuadRenderPass() {
@@ -519,6 +557,12 @@ namespace VkDragons {
             };
 
             mainRenderPass = new RenderPass(renderer.Device, info);
+        }
+
+        void AllocateCommandBuffers() {
+            if (commandBuffers.Count > 0) renderer.CommandPool.Free(commandBuffers);
+
+            commandBuffers = new List<CommandBuffer>(renderer.CommandPool.Allocate(VkCommandBufferLevel.Primary, renderer.SwapchainImages.Count));
         }
 
         void CreateSampler() {

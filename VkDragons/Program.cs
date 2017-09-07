@@ -35,6 +35,7 @@ namespace VkDragons {
                     double elapsed = now - lastTime;
 
                     scene.Update(elapsed);
+                    scene.Render();
                 }
             }
 
