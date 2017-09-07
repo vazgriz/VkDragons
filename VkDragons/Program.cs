@@ -23,6 +23,9 @@ namespace VkDragons {
             using (Scene scene = new Scene(window)) {
                 window.Visible = true;
                 double lastTime = 0;
+                double nextFPS = 0.25;
+                int frames = 0;
+
                 while (!window.ShouldClose) {
                     GLFW.PollEvents();
 
@@ -33,6 +36,14 @@ namespace VkDragons {
 
                     double now = GLFW.GetTime();
                     double elapsed = now - lastTime;
+                    lastTime = now;
+                    frames++;
+
+                    if (now > nextFPS) {
+                        window.Title = $"Here Be Dragons ({Math.Round(frames / (0.25 + (now - nextFPS)))} fps)";
+                        frames = 0;
+                        nextFPS = now + 0.25;
+                    }
 
                     scene.Update(elapsed);
                     scene.Render();
