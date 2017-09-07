@@ -40,6 +40,7 @@ namespace VkDragons {
         Model dragon;
         Model suzanne;
         Model plane;
+        Skybox skybox;
 
         Material dragonMat;
         Material suzanneMat;
@@ -72,6 +73,7 @@ namespace VkDragons {
             dragon = new Model(renderer, "resources/dragon.obj");
             suzanne = new Model(renderer, "resources/suzanne.obj");
             plane = new Model(renderer, "resources/plane.obj");
+            skybox = new Skybox(renderer);
 
             dragon.Transform.Scale = new Vector3(0.5f);
             dragon.Transform.Position = new Vector3(-0.1f, 0, -0.25f);
@@ -122,6 +124,7 @@ namespace VkDragons {
             dragon.Dispose();
             suzanne.Dispose();
             plane.Dispose();
+            skybox.Dispose();
             dragonMat.Dispose();
             suzanneMat.Dispose();
             planeMat.Dispose();
