@@ -127,6 +127,10 @@ namespace VkDragons {
             stagingBuffers[start + 4].Fill(mesh.TexCoords);
             stagingBuffers[start + 5].Fill(mesh.Indices);
 
+            for (int i = 0; i < 6; i++) {
+                stagingBuffers[start + i].CopyToBuffer(commandBuffer, buffers[i]);
+            }
+
             mesh = null;
         }
 
