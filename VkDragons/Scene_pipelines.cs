@@ -569,7 +569,7 @@ namespace VkDragons {
             };
 
             byte[] specializationData = new byte[8];
-            Interop.Copy(renderer.Gamma ? 1 : 0, specializationData, 0);
+            Interop.Copy(renderer.Gamma ? 0 : 1, specializationData, 0);
             Interop.Copy(2.2f, specializationData, 4);
 
             List<VkSpecializationMapEntry> entries = new List<VkSpecializationMapEntry> {
