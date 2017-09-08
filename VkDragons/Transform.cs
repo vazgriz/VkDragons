@@ -43,7 +43,7 @@ namespace VkDragons {
         }
 
         void Apply() {
-            WorldMatrix = Matrix4x4.CreateTranslation(position) * Matrix4x4.CreateFromQuaternion(rotation) * Matrix4x4.CreateScale(scale);
+            WorldMatrix = Matrix4x4.CreateScale(scale) * Matrix4x4.CreateFromQuaternion(rotation) * Matrix4x4.CreateTranslation(position);
         }
     }
 }
