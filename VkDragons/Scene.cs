@@ -435,6 +435,11 @@ namespace VkDragons {
             suzanneMat.Bind(commandBuffer, modelPipelineLayout, 2);
             suzanne.Draw(commandBuffer, modelPipelineLayout, camera);
 
+            commandBuffer.BindPipeline(VkPipelineBindPoint.Graphics, planePipeline);
+
+            planeMat.Bind(commandBuffer, modelPipelineLayout, 2);
+            plane.Draw(commandBuffer, modelPipelineLayout, camera);
+
             commandBuffer.BindPipeline(VkPipelineBindPoint.Graphics, skyboxPipeline);
 
             commandBuffer.SetViewports(0, new VkViewport {
