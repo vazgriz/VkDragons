@@ -222,6 +222,8 @@ namespace VkDragons {
                 dragon.UploadData(commandBuffer, stagingBuffers);
                 suzanne.UploadData(commandBuffer, stagingBuffers);
                 plane.UploadData(commandBuffer, stagingBuffers);
+                quad.UploadData(commandBuffer, stagingBuffers);
+                skybox.UploadData(commandBuffer, stagingBuffers);
 
                 renderer.SubmitCommandBuffer(commandBuffer);
             }
@@ -317,11 +319,82 @@ namespace VkDragons {
         }
 
         void RecordDepthPass(CommandBuffer commandBuffer) {
+            VkClearValue colorClear = new VkClearValue();
+            colorClear.color.float32_0 = 1;
+            colorClear.color.float32_1 = 1;
+            colorClear.color.float32_2 = 1;
+            colorClear.color.float32_3 = 1;
 
+            VkClearValue depthClear = new VkClearValue();
+            depthClear.depthStencil.depth = 1;
+
+            commandBuffer.BeginRenderPass(new RenderPassBeginInfo {
+                renderPass = lightRenderPass,
+                clearValues = new List<VkClearValue> {
+                    colorClear, depthClear
+                },
+                framebuffer = lightFramebuffer,
+                renderArea = new VkRect2D {
+                    extent = new VkExtent2D {
+                        width = lightDepth.Width,
+                        height = lightDepth.Height
+                    }
+                }
+            }, VkSubpassContents.Inline);
+
+            commandBuffer.BindPipeline(VkPipelineBindPoint.Graphics, lightPipeline);
+
+            commandBuffer.SetViewports(0, new VkViewport {
+                width = lightDepth.Width,
+                height = lightDepth.Height,
+                maxDepth = 1
+            });
+            commandBuffer.SetScissor(0, new VkRect2D {
+                extent = new VkExtent2D {
+                    width = lightDepth.Width,
+                    height = lightDepth.Height
+                }
+            });
+
+            camUniform.Bind(commandBuffer, lightPipelineLayout, 0);
+            lightUniform.Bind(commandBuffer, lightPipelineLayout, 1);
+
+            dragon.DrawDepth(commandBuffer, lightPipelineLayout, camera);
+
+            commandBuffer.EndRenderPass();
         }
 
         void RecordBoxBlurPass(CommandBuffer commandBuffer) {
+            commandBuffer.BeginRenderPass(new RenderPassBeginInfo {
+                renderPass = boxBlurRenderPass,
+                framebuffer = boxBlurFramebuffer,
+                renderArea = new VkRect2D {
+                    extent = new VkExtent2D {
+                        width = boxBlur.Width,
+                        height = boxBlur.Height
+                    }
+                }
+            }, VkSubpassContents.Inline);
 
+            commandBuffer.BindPipeline(VkPipelineBindPoint.Graphics, boxBlurPipeline);
+
+            commandBuffer.SetViewports(0, new VkViewport {
+                width = boxBlur.Width,
+                height = boxBlur.Height,
+                maxDepth = 1
+            });
+            commandBuffer.SetScissor(0, new VkRect2D {
+                extent = new VkExtent2D {
+                    width = boxBlur.Width,
+                    height = boxBlur.Height
+                }
+            });
+
+            lightMat.Bind(commandBuffer, screenQuadPipelineLayout, 0);
+
+            quad.Draw(commandBuffer);
+
+            commandBuffer.EndRenderPass();
         }
 
         void RecordGeometryPass(CommandBuffer commandBuffer) {
@@ -362,7 +435,29 @@ namespace VkDragons {
         }
 
         void RecordFXAAPass(CommandBuffer commandBuffer) {
+            commandBuffer.BeginRenderPass(new RenderPassBeginInfo {
+                renderPass = screenQuadRenderPass,
+                framebuffer = fxaaFramebuffer,
+                renderArea = new VkRect2D {
+                    extent = renderer.SwapchainExtent
+                }                
+            }, VkSubpassContents.Inline);
 
+            commandBuffer.BindPipeline(VkPipelineBindPoint.Graphics, fxaaPipeline);
+            geometryMat.Bind(commandBuffer, screenQuadPipelineLayout, 0);
+
+            commandBuffer.SetViewports(0, new VkViewport {
+                width = Width,
+                height = Height,
+                maxDepth = 1
+            });
+            commandBuffer.SetScissor(0, new VkRect2D {
+                extent = renderer.SwapchainExtent
+            });
+
+            quad.Draw(commandBuffer);
+
+            commandBuffer.EndRenderPass();
         }
 
         void RecordMainPass(CommandBuffer commandBuffer, uint imageIndex) {
@@ -373,6 +468,20 @@ namespace VkDragons {
                     extent = renderer.SwapchainExtent
                 }
             }, VkSubpassContents.Inline);
+
+            commandBuffer.BindPipeline(VkPipelineBindPoint.Graphics, finalPipeline);
+            geometryMat.Bind(commandBuffer, screenQuadPipelineLayout, 0);
+
+            commandBuffer.SetViewports(0, new VkViewport {
+                width = Width,
+                height = Height,
+                maxDepth = 1
+            });
+            commandBuffer.SetScissor(0, new VkRect2D {
+                extent = renderer.SwapchainExtent
+            });
+
+            quad.Draw(commandBuffer);
 
             commandBuffer.EndRenderPass();
         }

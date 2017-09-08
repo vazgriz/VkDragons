@@ -15,15 +15,31 @@ namespace VkDragons {
         PipelineLayout screenQuadPipelineLayout;
 
         GraphicsPipeline modelPipeline;
+        GraphicsPipeline lightPipeline;
+        GraphicsPipeline boxBlurPipeline;
+        GraphicsPipeline fxaaPipeline;
+        GraphicsPipeline finalPipeline;
 
         void CreatePipelines() {
             CreateModelPipelineLayout();
             CreateModelPipeline();
+            CreateLightPipelineLayout();
+            CreateLightPipeline();
+            CreateScreenQuadPipelineLayout();
+            CreateBoxBlurPipeline();
+            CreateFXAAPipeline();
+            CreateFinalPipeline();
         }
 
         void DestroyPipelines() {
             modelPipelineLayout.Dispose();
             modelPipeline.Dispose();
+            lightPipelineLayout.Dispose();
+            lightPipeline.Dispose();
+            screenQuadPipelineLayout.Dispose();
+            boxBlurPipeline.Dispose();
+            fxaaPipeline.Dispose();
+            finalPipeline.Dispose();
         }
 
         void RecreatePipelines() {
@@ -140,6 +156,410 @@ namespace VkDragons {
             using (vert)
             using (frag) {
                 modelPipeline = new GraphicsPipeline(renderer.Device, info, null);
+            }
+        }
+
+        void CreateLightPipelineLayout() {
+            PipelineLayoutCreateInfo info = new PipelineLayoutCreateInfo {
+                setLayouts = new List<DescriptorSetLayout> {
+                    uniformSetLayout, uniformSetLayout
+                },
+                pushConstantRanges = new List<VkPushConstantRange> {
+                    new VkPushConstantRange {
+                        offset = 0,
+                        size = (uint)(Interop.SizeOf<Matrix4x4>()),
+                        stageFlags = VkShaderStageFlags.VertexBit
+                    }
+                }
+            };
+
+            lightPipelineLayout = new PipelineLayout(renderer.Device, info);
+        }
+
+        void CreateLightPipeline() {
+            ShaderModule vert = CreateShader("resources/shaders/object_depth.vert.spv");
+            ShaderModule frag = CreateShader("resources/shaders/object_depth.frag.spv");
+
+            var vertInfo = new PipelineShaderStageCreateInfo {
+                stage = VkShaderStageFlags.VertexBit,
+                module = vert,
+                name = "main"
+            };
+
+            var fragInfo = new PipelineShaderStageCreateInfo {
+                stage = VkShaderStageFlags.FragmentBit,
+                module = frag,
+                name = "main"
+            };
+
+            var bindings = Model.DepthBindingDescriptions;
+            var attributes = Model.DepthAttributeDescriptions;
+
+            var vertexInputInfo = new PipelineVertexInputStateCreateInfo {
+                vertexBindingDescriptions = bindings,
+                vertexAttributeDescriptions = attributes
+            };
+
+            var inputAssembly = new PipelineInputAssemblyStateCreateInfo {
+                topology = VkPrimitiveTopology.TriangleList,
+            };
+
+            var viewportState = new PipelineViewportStateCreateInfo {
+                viewports = new List<VkViewport> { default(VkViewport) },
+                scissors = new List<VkRect2D> { default(VkRect2D) }
+            };
+
+            var rasterizer = new PipelineRasterizationStateCreateInfo {
+                polygonMode = VkPolygonMode.Fill,
+                lineWidth = 1,
+                cullMode = VkCullModeFlags.BackBit,
+                frontFace = VkFrontFace.CounterClockwise
+            };
+
+            var multisampling = new PipelineMultisampleStateCreateInfo {
+                rasterizationSamples = VkSampleCountFlags._1Bit
+            };
+
+            var colorBlending = new PipelineColorBlendStateCreateInfo {
+                attachments = new List<PipelineColorBlendAttachmentState> {
+                    new PipelineColorBlendAttachmentState {
+                        colorWriteMask = VkColorComponentFlags.RBit | VkColorComponentFlags.GBit | VkColorComponentFlags.BBit | VkColorComponentFlags.ABit
+                    }
+                }
+            };
+
+            var depthStencil = new PipelineDepthStencilStateCreateInfo {
+                depthTestEnable = true,
+                depthWriteEnable = true,
+                depthCompareOp = VkCompareOp.Less,
+            };
+
+            var dynamicState = new PipelineDynamicStateCreateInfo {
+                dynamicStates = new List<VkDynamicState> {
+                    VkDynamicState.Viewport,
+                    VkDynamicState.Scissor
+                }
+            };
+
+            var info = new GraphicsPipelineCreateInfo {
+                stages = new List<PipelineShaderStageCreateInfo> { vertInfo, fragInfo },
+                vertexInputState = vertexInputInfo,
+                inputAssemblyState = inputAssembly,
+                viewportState = viewportState,
+                rasterizationState = rasterizer,
+                multisampleState = multisampling,
+                colorBlendState = colorBlending,
+                depthStencilState = depthStencil,
+                dynamicState = dynamicState,
+                layout = lightPipelineLayout,
+                renderPass = lightRenderPass,
+                subpass = 0,
+            };
+
+            using (vert)
+            using (frag) {
+                lightPipeline = new GraphicsPipeline(renderer.Device, info, null);
+            }
+        }
+
+        void CreateScreenQuadPipelineLayout() {
+            PipelineLayoutCreateInfo info = new PipelineLayoutCreateInfo {
+                setLayouts = new List<DescriptorSetLayout> {
+                    textureSetLayout
+                }
+            };
+
+            screenQuadPipelineLayout = new PipelineLayout(renderer.Device, info);
+        }
+
+        void CreateBoxBlurPipeline() {
+            ShaderModule vert = CreateShader("resources/shaders/boxblur.vert.spv");
+            ShaderModule frag = CreateShader("resources/shaders/boxblur.frag.spv");
+
+            var vertInfo = new PipelineShaderStageCreateInfo {
+                stage = VkShaderStageFlags.VertexBit,
+                module = vert,
+                name = "main"
+            };
+
+            var fragInfo = new PipelineShaderStageCreateInfo {
+                stage = VkShaderStageFlags.FragmentBit,
+                module = frag,
+                name = "main",
+            };
+
+            var bindings = ScreenQuad.BindingDescriptions;
+            var attributes = ScreenQuad.AttributeDescriptions;
+
+            var vertexInputInfo = new PipelineVertexInputStateCreateInfo {
+                vertexBindingDescriptions = bindings,
+                vertexAttributeDescriptions = attributes
+            };
+
+            var inputAssembly = new PipelineInputAssemblyStateCreateInfo {
+                topology = VkPrimitiveTopology.TriangleList,
+            };
+
+            var viewportState = new PipelineViewportStateCreateInfo {
+                viewports = new List<VkViewport> { default(VkViewport) },
+                scissors = new List<VkRect2D> { default(VkRect2D) }
+            };
+
+            var rasterizer = new PipelineRasterizationStateCreateInfo {
+                polygonMode = VkPolygonMode.Fill,
+                lineWidth = 1,
+                cullMode = VkCullModeFlags.None,
+                frontFace = VkFrontFace.CounterClockwise
+            };
+
+            var multisampling = new PipelineMultisampleStateCreateInfo {
+                rasterizationSamples = VkSampleCountFlags._1Bit
+            };
+
+            var colorBlending = new PipelineColorBlendStateCreateInfo {
+                attachments = new List<PipelineColorBlendAttachmentState> {
+                    new PipelineColorBlendAttachmentState {
+                        colorWriteMask = VkColorComponentFlags.RBit | VkColorComponentFlags.GBit | VkColorComponentFlags.BBit | VkColorComponentFlags.ABit
+                    }
+                }
+            };
+
+            var dynamicState = new PipelineDynamicStateCreateInfo {
+                dynamicStates = new List<VkDynamicState> {
+                    VkDynamicState.Viewport,
+                    VkDynamicState.Scissor
+                }
+            };
+
+            var info = new GraphicsPipelineCreateInfo {
+                stages = new List<PipelineShaderStageCreateInfo> { vertInfo, fragInfo },
+                vertexInputState = vertexInputInfo,
+                inputAssemblyState = inputAssembly,
+                viewportState = viewportState,
+                rasterizationState = rasterizer,
+                multisampleState = multisampling,
+                colorBlendState = colorBlending,
+                dynamicState = dynamicState,
+                layout = screenQuadPipelineLayout,
+                renderPass = boxBlurRenderPass,
+                subpass = 0,
+            };
+
+            using (vert)
+            using (frag) {
+                boxBlurPipeline = new GraphicsPipeline(renderer.Device, info, null);
+            }
+        }
+
+        void CreateFXAAPipeline() {
+            ShaderModule vert = CreateShader("resources/shaders/screenquad.vert.spv");
+            ShaderModule frag = CreateShader("resources/shaders/fxaa.frag.spv");
+
+            var vertInfo = new PipelineShaderStageCreateInfo {
+                stage = VkShaderStageFlags.VertexBit,
+                module = vert,
+                name = "main"
+            };
+
+            byte[] specializationData = new byte[8];
+            Interop.Copy(1f / renderer.SwapchainExtent.width, specializationData, 0);
+            Interop.Copy(1f / renderer.SwapchainExtent.height, specializationData, 4);
+
+            List<VkSpecializationMapEntry> entries = new List<VkSpecializationMapEntry> {
+                new VkSpecializationMapEntry {
+                    constantID = 0,
+                    offset = 0,
+                    size = (IntPtr)Interop.SizeOf<float>()
+                },
+                new VkSpecializationMapEntry {
+                    constantID = 1,
+                    offset = (uint)Interop.SizeOf<float>(),
+                    size = (IntPtr)Interop.SizeOf<float>()
+                }
+            };
+
+            SpecializationInfo specializationInfo = new SpecializationInfo {
+                data = specializationData,
+                mapEntries = entries
+            };
+
+            var fragInfo = new PipelineShaderStageCreateInfo {
+                stage = VkShaderStageFlags.FragmentBit,
+                module = frag,
+                name = "main",
+                specializationInfo = specializationInfo
+            };
+
+            var bindings = ScreenQuad.BindingDescriptions;
+            var attributes = ScreenQuad.AttributeDescriptions;
+
+            var vertexInputInfo = new PipelineVertexInputStateCreateInfo {
+                vertexBindingDescriptions = bindings,
+                vertexAttributeDescriptions = attributes
+            };
+
+            var inputAssembly = new PipelineInputAssemblyStateCreateInfo {
+                topology = VkPrimitiveTopology.TriangleList,
+            };
+
+            var viewportState = new PipelineViewportStateCreateInfo {
+                viewports = new List<VkViewport> { default(VkViewport) },
+                scissors = new List<VkRect2D> { default(VkRect2D) }
+            };
+
+            var rasterizer = new PipelineRasterizationStateCreateInfo {
+                polygonMode = VkPolygonMode.Fill,
+                lineWidth = 1,
+                cullMode = VkCullModeFlags.None,
+                frontFace = VkFrontFace.CounterClockwise
+            };
+
+            var multisampling = new PipelineMultisampleStateCreateInfo {
+                rasterizationSamples = VkSampleCountFlags._1Bit
+            };
+
+            var colorBlending = new PipelineColorBlendStateCreateInfo {
+                attachments = new List<PipelineColorBlendAttachmentState> {
+                    new PipelineColorBlendAttachmentState {
+                        colorWriteMask = VkColorComponentFlags.RBit | VkColorComponentFlags.GBit | VkColorComponentFlags.BBit | VkColorComponentFlags.ABit
+                    }
+                }
+            };
+
+            var dynamicState = new PipelineDynamicStateCreateInfo {
+                dynamicStates = new List<VkDynamicState> {
+                    VkDynamicState.Viewport,
+                    VkDynamicState.Scissor
+                }
+            };
+
+            GraphicsPipeline old = fxaaPipeline;
+
+            var info = new GraphicsPipelineCreateInfo {
+                stages = new List<PipelineShaderStageCreateInfo> { vertInfo, fragInfo },
+                vertexInputState = vertexInputInfo,
+                inputAssemblyState = inputAssembly,
+                viewportState = viewportState,
+                rasterizationState = rasterizer,
+                multisampleState = multisampling,
+                colorBlendState = colorBlending,
+                dynamicState = dynamicState,
+                layout = screenQuadPipelineLayout,
+                renderPass = screenQuadRenderPass,
+                basePipelineHandle = old,
+                subpass = 0,
+            };
+
+            using (vert)
+            using (frag) {
+                fxaaPipeline = new GraphicsPipeline(renderer.Device, info, null);
+                if (old != null) old.Dispose();
+            }
+        }
+
+        void CreateFinalPipeline() {
+            ShaderModule vert = CreateShader("resources/shaders/screenquad.vert.spv");
+            ShaderModule frag = CreateShader("resources/shaders/final_screenquad.frag.spv");
+
+            var vertInfo = new PipelineShaderStageCreateInfo {
+                stage = VkShaderStageFlags.VertexBit,
+                module = vert,
+                name = "main"
+            };
+
+            byte[] specializationData = new byte[8];
+            Interop.Copy(renderer.Gamma ? 1 : 0, specializationData, 0);
+            Interop.Copy(2.2f, specializationData, 4);
+
+            List<VkSpecializationMapEntry> entries = new List<VkSpecializationMapEntry> {
+                new VkSpecializationMapEntry {
+                    constantID = 0,
+                    offset = 0,
+                    size = (IntPtr)Interop.SizeOf<uint>()
+                },
+                new VkSpecializationMapEntry {
+                    constantID = 1,
+                    offset = (uint)Interop.SizeOf<uint>(),
+                    size = (IntPtr)Interop.SizeOf<float>()
+                }
+            };
+
+            SpecializationInfo specializationInfo = new SpecializationInfo {
+                data = specializationData,
+                mapEntries = entries
+            };
+
+            var fragInfo = new PipelineShaderStageCreateInfo {
+                stage = VkShaderStageFlags.FragmentBit,
+                module = frag,
+                name = "main",
+                specializationInfo = specializationInfo
+            };
+
+            var bindings = ScreenQuad.BindingDescriptions;
+            var attributes = ScreenQuad.AttributeDescriptions;
+
+            var vertexInputInfo = new PipelineVertexInputStateCreateInfo {
+                vertexBindingDescriptions = bindings,
+                vertexAttributeDescriptions = attributes
+            };
+
+            var inputAssembly = new PipelineInputAssemblyStateCreateInfo {
+                topology = VkPrimitiveTopology.TriangleList,
+            };
+
+            var viewportState = new PipelineViewportStateCreateInfo {
+                viewports = new List<VkViewport> { default(VkViewport) },
+                scissors = new List<VkRect2D> { default(VkRect2D) }
+            };
+
+            var rasterizer = new PipelineRasterizationStateCreateInfo {
+                polygonMode = VkPolygonMode.Fill,
+                lineWidth = 1,
+                cullMode = VkCullModeFlags.None,
+                frontFace = VkFrontFace.CounterClockwise
+            };
+
+            var multisampling = new PipelineMultisampleStateCreateInfo {
+                rasterizationSamples = VkSampleCountFlags._1Bit
+            };
+
+            var colorBlending = new PipelineColorBlendStateCreateInfo {
+                attachments = new List<PipelineColorBlendAttachmentState> {
+                    new PipelineColorBlendAttachmentState {
+                        colorWriteMask = VkColorComponentFlags.RBit | VkColorComponentFlags.GBit | VkColorComponentFlags.BBit | VkColorComponentFlags.ABit
+                    }
+                }
+            };
+
+            var dynamicState = new PipelineDynamicStateCreateInfo {
+                dynamicStates = new List<VkDynamicState> {
+                    VkDynamicState.Viewport,
+                    VkDynamicState.Scissor
+                }
+            };
+
+            GraphicsPipeline old = finalPipeline;
+
+            var info = new GraphicsPipelineCreateInfo {
+                stages = new List<PipelineShaderStageCreateInfo> { vertInfo, fragInfo },
+                vertexInputState = vertexInputInfo,
+                inputAssemblyState = inputAssembly,
+                viewportState = viewportState,
+                rasterizationState = rasterizer,
+                multisampleState = multisampling,
+                colorBlendState = colorBlending,
+                dynamicState = dynamicState,
+                layout = screenQuadPipelineLayout,
+                renderPass = mainRenderPass,
+                basePipelineHandle = old,
+                subpass = 0,
+            };
+
+            using (vert)
+            using (frag) {
+                finalPipeline = new GraphicsPipeline(renderer.Device, info, null);
+                if (old != null) old.Dispose();
             }
         }
     }
