@@ -51,7 +51,7 @@ namespace VkDragons {
 
             commandBuffer.PushConstants(pipelineLayout, VkShaderStageFlags.VertexBit, 0, Transform.WorldMatrix);
 
-            Matrix4x4 MV = camera.View * Transform.WorldMatrix;
+            Matrix4x4 MV = Transform.WorldMatrix * camera.View;
             Matrix4x4 inverse;
             Matrix4x4.Invert(MV, out inverse);
             Matrix4x4 normal = Matrix4x4.Transpose(inverse);
