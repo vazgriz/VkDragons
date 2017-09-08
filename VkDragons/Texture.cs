@@ -150,6 +150,7 @@ namespace VkDragons {
             for (int i = 0; i < data.Count; i++) {
                 var stagingBuffer = new StagingBuffer(renderer, (ulong)Interop.SizeOf(data[i]));
                 stagingBuffer.Fill(data[i]);
+                stagingBuffer.CopyToImage(commandBuffer, image, Width, Height, (uint)i);
                 stagingBuffers.Add(stagingBuffer);
             }
 
