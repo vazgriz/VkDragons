@@ -52,16 +52,18 @@ namespace VkDragons {
         public void Draw(CommandBuffer commandBuffer) {
             commandBuffer.BindVertexBuffers(0, vertexBuffer, 0);
             commandBuffer.BindIndexBuffer(indexBuffer, 0, VkIndexType.Uint32);
-            commandBuffer.Draw((uint)indices.Count, 1, 0, 0);
+            commandBuffer.DrawIndexed((uint)indices.Count, 1, 0, 0, 0);
         }
 
         public void UploadData(CommandBuffer commandBuffer, DisposableList<StagingBuffer> stagingBuffers) {
             var vertexStaging = new StagingBuffer(renderer, vertexAlloc.size);
             vertexStaging.Fill(positions);
+            vertexStaging.CopyToBuffer(commandBuffer, vertexBuffer);
             stagingBuffers.Add(vertexStaging);
 
             var indexStaging = new StagingBuffer(renderer, indexAlloc.size);
             indexStaging.Fill(indices);
+            indexStaging.CopyToBuffer(commandBuffer, indexBuffer);
             stagingBuffers.Add(indexStaging);
         }
 
