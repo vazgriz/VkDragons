@@ -58,7 +58,7 @@ namespace VkDragons {
             
             commandBuffer.PushConstants(pipelineLayout, VkShaderStageFlags.VertexBit,
                 (uint)Interop.SizeOf<Matrix4x4>(), 3 * (uint)Interop.SizeOf<Vector4>(),
-                Interop.AddressOf(ref inverse));
+                Interop.AddressOf(ref normal));
 
             commandBuffer.DrawIndexed(IndexCount, 1, 0, 0, 0);
         }
