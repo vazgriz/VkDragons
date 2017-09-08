@@ -13,11 +13,11 @@ namespace VkDragons {
         public Vector4 Position { get; set; }
 
         public Light() {
-            var projection = Matrix4x4.CreateOrthographic(0.75f, 0.75f, 2f, 6f);
+            var projection = Matrix4x4.CreateOrthographic(1.5f, 1.5f, 2f, 6f);
 
             projection.M22 *= -1;
             projection.M33 *= 0.5f;
-            projection.M43 *= 0.25f;
+            projection.M34 *= 0.25f;
 
             Projection = projection;
 
