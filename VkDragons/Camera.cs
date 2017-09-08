@@ -36,7 +36,7 @@ namespace VkDragons {
 
         public void Update() {
             Projection = Matrix4x4.CreatePerspectiveFieldOfView(FOV * (float)(Math.PI / 180f), Width / (float)Height, 0.1f, 100);
-            Projection = correctionMatrix * Projection;
+            Projection = Projection * correctionMatrix;
 
             Vector3 forward = Vector3.Transform(new Vector3(0, 0, -1), Rotation);
             Vector3 up = Vector3.Transform(new Vector3(0, 1, 0), Rotation);
