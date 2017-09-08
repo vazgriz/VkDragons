@@ -102,7 +102,7 @@ namespace VkDragons {
 
             CreateImage(VkImageUsageFlags.TransferDstBit | VkImageUsageFlags.TransferSrcBit | VkImageUsageFlags.SampledBit,
                 VkImageCreateFlags.CubeCompatibleBit);
-            CreateImageView(VkImageAspectFlags.ColorBit, VkImageViewType._2dArray);
+            CreateImageView(VkImageAspectFlags.ColorBit, VkImageViewType.Cube);
         }
 
         void Init(uint width, uint height, VkFormat format, VkImageUsageFlags usage) {
