@@ -56,7 +56,7 @@ namespace VkDragons {
             Matrix4x4.Invert(MV, out inverse);
             Matrix4x4 normal = Matrix4x4.Transpose(inverse);
             
-            commandBuffer.PushConstants(pipelineLayout, VkShaderStageFlags.FragmentBit,
+            commandBuffer.PushConstants(pipelineLayout, VkShaderStageFlags.VertexBit,
                 (uint)Interop.SizeOf<Matrix4x4>(), 3 * (uint)Interop.SizeOf<Vector4>(),
                 Interop.AddressOf(ref inverse));
 
