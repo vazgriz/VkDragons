@@ -303,9 +303,29 @@ namespace VkDragons {
                 flags = VkCommandBufferUsageFlags.OneTimeSubmitBit
             });
 
+            RecordDepthPass(commandBuffer);
+            RecordBoxBlurPass(commandBuffer);
+            RecordGeometryPass(commandBuffer);
+            RecordFXAAPass(commandBuffer);
             RecordMainPass(commandBuffer, imageIndex);
 
             commandBuffer.End();
+        }
+
+        void RecordDepthPass(CommandBuffer commandBuffer) {
+
+        }
+
+        void RecordBoxBlurPass(CommandBuffer commandBuffer) {
+
+        }
+
+        void RecordGeometryPass(CommandBuffer commandBuffer) {
+
+        }
+
+        void RecordFXAAPass(CommandBuffer commandBuffer) {
+
         }
 
         void RecordMainPass(CommandBuffer commandBuffer, uint imageIndex) {
