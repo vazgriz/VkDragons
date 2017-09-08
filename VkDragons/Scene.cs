@@ -360,6 +360,7 @@ namespace VkDragons {
             lightUniform.Bind(commandBuffer, lightPipelineLayout, 1);
 
             dragon.DrawDepth(commandBuffer, lightPipelineLayout, camera);
+            suzanne.DrawDepth(commandBuffer, lightPipelineLayout, camera);
 
             commandBuffer.EndRenderPass();
         }
@@ -430,6 +431,9 @@ namespace VkDragons {
 
             dragonMat.Bind(commandBuffer, modelPipelineLayout, 2);
             dragon.Draw(commandBuffer, modelPipelineLayout, camera);
+
+            suzanneMat.Bind(commandBuffer, modelPipelineLayout, 2);
+            suzanne.Draw(commandBuffer, modelPipelineLayout, camera);
 
             commandBuffer.EndRenderPass();
         }
