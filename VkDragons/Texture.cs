@@ -137,11 +137,26 @@ namespace VkDragons {
             for (int i = 0; i < filenames.Count; i++) {
                 var raw = File.ReadAllBytes(filenames[i]);
                 data.Add(new List<byte>(STB.Load(raw, out width, out height, out components, 4)));
+                FlipImage(data[i], width, height);
             }
 
             Width = (uint)width;
             Height = (uint)height;
             arrayLayers = (uint)filenames.Count;
+        }
+
+        void FlipImage(List<byte> data, int width, int height) {
+            int stride = width * 4;
+            for (int y = 0; y < height / 2; y++) {
+                int top = y * stride;
+                int bottom = (height - y - 1) * stride;
+
+                for (int x = 0; x < stride; x++) {
+                    byte temp = data[top + x];
+                    data[top + x] = data[bottom + x];
+                    data[bottom + x] = temp;
+                }
+            }
         }
 
         public void UploadData(CommandBuffer commandBuffer, DisposableList<StagingBuffer> stagingBuffers) {
