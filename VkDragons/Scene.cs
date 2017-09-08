@@ -164,6 +164,8 @@ namespace VkDragons {
             boxBlurFramebuffer = CreateFramebuffer(boxBlurRenderPass, boxBlur.Width, boxBlur.Height, new List<ImageView> { boxBlur.ImageView });
 
             CreateSwapchainResources(Width, Height);
+
+            AllocateCommandBuffers();
         }
 
         public void Dispose() {
