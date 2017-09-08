@@ -40,6 +40,10 @@ namespace VkDragons {
             Interop.Copy(data, mapping);
         }
 
+        public void Bind(CommandBuffer commandBuffer, PipelineLayout pipelineLayout, uint firstSet) {
+            commandBuffer.BindDescriptorSets(VkPipelineBindPoint.Graphics, pipelineLayout, firstSet, set, null);
+        }
+
         void CreateHostBuffer(ulong size, VkBufferUsageFlags usage) {
             BufferCreateInfo info = new BufferCreateInfo();
             info.size = size;
