@@ -17,7 +17,7 @@ namespace VkDragons {
 
             projection.M22 *= -1;
             projection.M33 *= 0.5f;
-            projection.M34 *= 0.25f;
+            projection.M43 *= 0.25f;
 
             Projection = projection;
 
