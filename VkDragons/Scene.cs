@@ -165,6 +165,7 @@ namespace VkDragons {
 
             CreateSwapchainResources(Width, Height);
 
+            CreatePipelines();
             AllocateCommandBuffers();
         }
 
@@ -193,6 +194,7 @@ namespace VkDragons {
             boxBlurRenderPass.Dispose();
             lightFramebuffer.Dispose();
             boxBlurFramebuffer.Dispose();
+            DestroyPipelines();
             renderer.Dispose();
         }
 
@@ -323,7 +325,40 @@ namespace VkDragons {
         }
 
         void RecordGeometryPass(CommandBuffer commandBuffer) {
+            VkClearValue colorClear = new VkClearValue();
 
+            VkClearValue depthClear = new VkClearValue();
+            depthClear.depthStencil.depth = 1;
+
+            commandBuffer.BeginRenderPass(new RenderPassBeginInfo {
+                renderPass = geometryRenderPass,
+                clearValues = new List<VkClearValue> {
+                    colorClear, depthClear
+                },
+                framebuffer = geometryFramebuffer,
+                renderArea = new VkRect2D {
+                    extent = renderer.SwapchainExtent
+                }
+            }, VkSubpassContents.Inline);
+
+            commandBuffer.BindPipeline(VkPipelineBindPoint.Graphics, modelPipeline);
+
+            commandBuffer.SetViewports(0, new VkViewport {
+                width = Width,
+                height = Height,
+                maxDepth = 1
+            });
+            commandBuffer.SetScissor(0, new VkRect2D {
+                extent = renderer.SwapchainExtent
+            });
+
+            camUniform.Bind(commandBuffer, modelPipelineLayout, 0);
+            lightUniform.Bind(commandBuffer, modelPipelineLayout, 1);
+
+            dragonMat.Bind(commandBuffer, modelPipelineLayout, 2);
+            dragon.Draw(commandBuffer, modelPipelineLayout, camera);
+
+            commandBuffer.EndRenderPass();
         }
 
         void RecordFXAAPass(CommandBuffer commandBuffer) {
