@@ -17,6 +17,7 @@ namespace VkDragons {
         GraphicsPipeline modelPipeline;
         GraphicsPipeline lightPipeline;
         GraphicsPipeline boxBlurPipeline;
+        GraphicsPipeline skyboxPipeline;
         GraphicsPipeline fxaaPipeline;
         GraphicsPipeline finalPipeline;
 
@@ -25,6 +26,8 @@ namespace VkDragons {
             CreateModelPipeline();
             CreateLightPipelineLayout();
             CreateLightPipeline();
+            CreateSkyboxPipelineLayout();
+            CreateSkyboxPipeline();
             CreateScreenQuadPipelineLayout();
             CreateBoxBlurPipeline();
             CreateFXAAPipeline();
@@ -36,6 +39,8 @@ namespace VkDragons {
             modelPipeline.Dispose();
             lightPipelineLayout.Dispose();
             lightPipeline.Dispose();
+            skyboxPipelineLayout.Dispose();
+            skyboxPipeline.Dispose();
             screenQuadPipelineLayout.Dispose();
             boxBlurPipeline.Dispose();
             fxaaPipeline.Dispose();
@@ -156,6 +161,102 @@ namespace VkDragons {
             using (vert)
             using (frag) {
                 modelPipeline = new GraphicsPipeline(renderer.Device, info, null);
+            }
+        }
+
+        void CreateSkyboxPipelineLayout() {
+            PipelineLayoutCreateInfo info = new PipelineLayoutCreateInfo {
+                setLayouts = new List<DescriptorSetLayout> {
+                    uniformSetLayout, textureSetLayout
+                }
+            };
+
+            skyboxPipelineLayout = new PipelineLayout(renderer.Device, info);
+        }
+
+        void CreateSkyboxPipeline() {
+            ShaderModule vert = CreateShader("resources/shaders/cube.vert.spv");
+            ShaderModule frag = CreateShader("resources/shaders/cube.frag.spv");
+
+            var vertInfo = new PipelineShaderStageCreateInfo {
+                stage = VkShaderStageFlags.VertexBit,
+                module = vert,
+                name = "main"
+            };
+
+            var fragInfo = new PipelineShaderStageCreateInfo {
+                stage = VkShaderStageFlags.FragmentBit,
+                module = frag,
+                name = "main"
+            };
+
+            var bindings = Skybox.BindingDescriptions;
+            var attributes = Skybox.AttributeDescriptions;
+
+            var vertexInputInfo = new PipelineVertexInputStateCreateInfo {
+                vertexBindingDescriptions = bindings,
+                vertexAttributeDescriptions = attributes
+            };
+
+            var inputAssembly = new PipelineInputAssemblyStateCreateInfo {
+                topology = VkPrimitiveTopology.TriangleList,
+            };
+
+            var viewportState = new PipelineViewportStateCreateInfo {
+                viewports = new List<VkViewport> { default(VkViewport) },
+                scissors = new List<VkRect2D> { default(VkRect2D) }
+            };
+
+            var rasterizer = new PipelineRasterizationStateCreateInfo {
+                polygonMode = VkPolygonMode.Fill,
+                lineWidth = 1,
+                cullMode = VkCullModeFlags.None,
+                frontFace = VkFrontFace.CounterClockwise
+            };
+
+            var multisampling = new PipelineMultisampleStateCreateInfo {
+                rasterizationSamples = VkSampleCountFlags._1Bit
+            };
+
+            var colorBlending = new PipelineColorBlendStateCreateInfo {
+                attachments = new List<PipelineColorBlendAttachmentState> {
+                    new PipelineColorBlendAttachmentState {
+                        colorWriteMask = VkColorComponentFlags.RBit | VkColorComponentFlags.GBit | VkColorComponentFlags.BBit | VkColorComponentFlags.ABit
+                    }
+                }
+            };
+
+            var depthStencil = new PipelineDepthStencilStateCreateInfo {
+                depthTestEnable = true,
+                depthWriteEnable = false,
+                depthCompareOp = VkCompareOp.LessOrEqual,
+            };
+
+            var dynamicState = new PipelineDynamicStateCreateInfo {
+                dynamicStates = new List<VkDynamicState> {
+                    VkDynamicState.Viewport,
+                    VkDynamicState.Scissor
+                }
+            };
+
+            var info = new GraphicsPipelineCreateInfo {
+                stages = new List<PipelineShaderStageCreateInfo> { vertInfo, fragInfo },
+                vertexInputState = vertexInputInfo,
+                inputAssemblyState = inputAssembly,
+                viewportState = viewportState,
+                rasterizationState = rasterizer,
+                multisampleState = multisampling,
+                colorBlendState = colorBlending,
+                depthStencilState = depthStencil,
+                dynamicState = dynamicState,
+                layout = skyboxPipelineLayout,
+                renderPass = geometryRenderPass,
+                subpass = 0,
+            };
+
+            using (vert)
+            using (frag) {
+                skyboxPipeline = new GraphicsPipeline(renderer.Device, info, null);
             }
         }
 

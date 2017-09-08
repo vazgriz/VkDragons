@@ -435,6 +435,20 @@ namespace VkDragons {
             suzanneMat.Bind(commandBuffer, modelPipelineLayout, 2);
             suzanne.Draw(commandBuffer, modelPipelineLayout, camera);
 
+            commandBuffer.BindPipeline(VkPipelineBindPoint.Graphics, skyboxPipeline);
+
+            commandBuffer.SetViewports(0, new VkViewport {
+                width = Width,
+                height = Height,
+                maxDepth = 1
+            });
+            commandBuffer.SetScissor(0, new VkRect2D {
+                extent = renderer.SwapchainExtent
+            });
+
+            skyMat.Bind(commandBuffer, skyboxPipelineLayout, 1);
+            skybox.Draw(commandBuffer);
+
             commandBuffer.EndRenderPass();
         }
 
