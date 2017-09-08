@@ -132,11 +132,6 @@ namespace VkDragons {
             var skyColor = new Texture(renderer, TextureType.Cubemap, "resources/cubemap/cubemap", true);
             var skySmallColor = new Texture(renderer, TextureType.Cubemap, "resources/cubemap/cubemap_diff", true);
 
-            dragonMat = new Material(renderer, sampler, new List<Texture> { dragonColor, dragonNormal, dragonEffects });
-            suzanneMat = new Material(renderer, sampler, new List<Texture> { suzanneColor, suzanneNormal, suzanneEffects });
-            planeMat = new Material(renderer, sampler, new List<Texture> { planeColor, planeNormal, planeEffects });
-            skyMat = new Material(renderer, sampler, new List<Texture> { skyColor });
-
             textures = new DisposableList<Texture> {
                 dragonColor, dragonNormal, dragonEffects,
                 suzanneColor, suzanneNormal, suzanneEffects,
@@ -149,6 +144,11 @@ namespace VkDragons {
             lightDepth = new Texture(renderer, TextureType.Depth, 512, 512, VkImageUsageFlags.DepthStencilAttachmentBit);
             lightColor = new Texture(renderer, TextureType.Image, lightDepth.Width, lightDepth.Height, VkImageUsageFlags.ColorAttachmentBit | VkImageUsageFlags.SampledBit, VkFormat.R8g8Unorm);
             boxBlur = new Texture(renderer, TextureType.Image, lightDepth.Width, lightDepth.Height, VkImageUsageFlags.ColorAttachmentBit | VkImageUsageFlags.SampledBit, lightColor.Format);
+
+            dragonMat = new Material(renderer, sampler, new List<Texture> { dragonColor, dragonNormal, dragonEffects, skyColor, skySmallColor, boxBlur });
+            suzanneMat = new Material(renderer, sampler, new List<Texture> { suzanneColor, suzanneNormal, suzanneEffects, skyColor, skySmallColor, boxBlur });
+            planeMat = new Material(renderer, sampler, new List<Texture> { planeColor, planeNormal, planeEffects, skyColor, skySmallColor, boxBlur });
+            skyMat = new Material(renderer, sampler, new List<Texture> { skyColor });
 
             textures.Add(lightDepth);
             textures.Add(lightColor);
