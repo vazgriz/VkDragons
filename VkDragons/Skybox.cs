@@ -79,5 +79,29 @@ namespace VkDragons {
 
             buffer.Bind(alloc.memory, alloc.offset);
         }
+
+        public static List<VkVertexInputBindingDescription> BindingDescriptions {
+            get {
+                return new List<VkVertexInputBindingDescription> {
+                    new VkVertexInputBindingDescription {    //position
+                        binding = 0,
+                        stride = (uint)Interop.SizeOf<Vector3>(),
+                        inputRate = VkVertexInputRate.Vertex
+                    },
+                };
+            }
+        }
+
+        public static List<VkVertexInputAttributeDescription> AttributeDescriptions {
+            get {
+                return new List<VkVertexInputAttributeDescription> {
+                    new VkVertexInputAttributeDescription {
+                        binding = 0,
+                        location = 0,
+                        format = VkFormat.R32g32b32Sfloat,
+                    },
+                };
+            }
+        }
     }
 }
