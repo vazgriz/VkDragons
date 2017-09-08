@@ -24,7 +24,7 @@ namespace VkDragons {
         public float lightShininess;
     }
 
-    public class Scene : IDisposable {
+    public partial class Scene : IDisposable {
         Renderer renderer;
         Camera camera;
         Input input;
